@@ -33,6 +33,9 @@
   .card .big { font-size:30px; line-height:1; text-align:center; margin:2px 0 4px; filter:drop-shadow(0 3px 0 rgba(0,0,0,.6)); min-height:36px; display:flex; align-items:center; justify-content:center; }
   .card .big canvas { image-rendering:pixelated; width:39px; height:45px; }
   .card .rar { font-size:9px; letter-spacing:2px; }
+  .card.picked { border-color:#ffd93b; box-shadow:0 0 0 3px #ffd93b, 0 0 24px rgba(255,217,59,.6); transform:translateY(-6px) scale(1.04); }
+  .card.picked .cat { background:#ffd93b; color:#000; text-shadow:none; }
+  .shop-dim .card:not(.picked) { opacity:.45; }
   .card .nm { font-size:13px; font-weight:900; text-shadow:0 2px 0 #000; }
   .card .ds { font-size:10px; color:rgba(255,255,255,.7); flex:1; }
   .card .pr { font-size:12px; color:#ffd93b; font-weight:900; text-align:right; }
@@ -147,6 +150,10 @@
   .mobile .slot { width:46px; height:46px; font-size:22px; }
   .mobile.tabs #inv { display:none; }
   #debug { right:8px; bottom:40px; width:260px; z-index:61; font-size:11px; }
+  #mutetop { position:fixed; right:10px; top:88px; z-index:7; padding:5px 8px; font-size:14px; opacity:.75; }
+  .mobile #mutetop { top:auto; bottom:6px; right:6px; padding:6px 8px; }
+  .mobile.tabs #mutetop { bottom:52px; }
+  .mobile.land #mutetop { top:40px; bottom:auto; }
   #debug select { width:100%; margin:4px 0; }
   .mobile #debug { bottom:90px; }
   #merchant { left:50%; top:50%; transform:translate(-50%,-50%); width:min(760px, 94vw); box-sizing:border-box; max-height:92vh; overflow:auto; padding:16px; border-color:#c85cff; }
@@ -203,6 +210,7 @@
 <div id="inv" hidden></div>
 <div id="tip" hidden></div>
 <button id="dbgbtn" hidden>DEBUG</button>
+<button id="mutetop" title="mute (M)">🔊</button>
 <div id="debug" class="panel" hidden></div>
 <div id="tabs"><button data-tab="army">ARMY</button><button data-tab="shop">SHOP</button><button data-tab="bet">BET</button><button data-tab="codex">CODEX</button><button data-tab="boards">BOARDS</button></div>
 <div id="toast" hidden></div>
@@ -383,7 +391,7 @@ function drawText(str, x, y, s, color, o = {}) {
 }
 
 // ---------- audio (synth) ----------
-let AC = null, master = null, muted = false, sfxBudget = 0, SIM = false;
+let AC = null, master = null, muted = (() => { try { return localStorage.getItem('pixelclash_mute') === '1'; } catch (e) { return false; } })(), sfxBudget = 0, SIM = false;
 const sfxOff = () => !AC || muted || SIM;
 function audioInit() {
   if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
@@ -806,7 +814,7 @@ let bet = { side: null, wager: 0 }, odds = { p: 0.5, win: 2, lose: 2 };
 let selected = null, targeting = null, shopCards = [], enemyName = '', speed = 1, statsOpen = false;
 const MAX_ROSTER_ABS = 10;
 const clouds = [];
-function addTrauma(v) { trauma = Math.min(1, trauma + v); }
+function addTrauma(v) { trauma = Math.min(0.85, trauma + v * 0.75); }
 function addHitstop(v) { hitstop = Math.max(hitstop, v); }
 function addFlash(a, c = '#fff') { flash = Math.max(flash, a); flashColor = c; }
 
@@ -1566,9 +1574,9 @@ function update(rdt) {
     if (slowmo > 0) { slowmo -= rdt; ts *= 0.3; }
     if (hitstop > 0) { hitstop -= rdt; ts *= 0.04; }
     dt = rdt * ts;
-    trauma = Math.max(0, trauma - rdt * 1.6);
+    trauma = Math.max(0, trauma - rdt * 2.2);
     const sh = trauma * trauma;
-    shakeX = rand(-1, 1) * sh * 22; shakeY = rand(-1, 1) * sh * 16; shakeRot = rand(-1, 1) * sh * 0.02;
+    shakeX = rand(-1, 1) * sh * 11; shakeY = rand(-1, 1) * sh * 8; shakeRot = rand(-1, 1) * sh * 0.008;
     zoomPunch = Math.max(0, zoomPunch - rdt * 3); flash = Math.max(0, flash - rdt * 2.5);
   }
   time += dt;
@@ -1858,12 +1866,13 @@ function rollShop() {
 function renderShop() {
   const rerollCost = 10;
   UI.shop.innerHTML = shopCards.map((c, i) => {
-    if (c.kind === 'up') return `<div class="card ${gold - c.price < MIN_BET ? 'disabled' : ''}" data-i="${i}"><div class="cat skill">✦ SKILL</div><div class="big">${c.up.icon || '✦'}</div><div class="rar" style="color:${c.rar.color}">${c.rar.name}</div><div class="nm" style="color:${c.up.color}">${esc(c.up.name)}</div><div class="ds">${esc(c.up.desc)}${c.up.only ? '<br><i>' + c.up.only.join('/') + ' only</i>' : ''}</div><div class="pr">$${c.price}</div></div>`;
+    if (c.kind === 'up') { const picked = targeting && targeting.index === i; return `<div class="card ${picked ? 'picked' : gold - c.price < MIN_BET ? 'disabled' : ''}" data-i="${i}"><div class="cat skill">${picked ? '▶ APPLYING · PICK A UNIT' : '✦ SKILL'}</div><div class="big">${c.up.icon || '✦'}</div><div class="rar" style="color:${c.rar.color}">${c.rar.name}</div><div class="nm" style="color:${c.up.color}">${esc(c.up.name)}</div><div class="ds">${esc(c.up.desc)}${c.up.only ? '<br><i>' + c.up.only.join('/') + ' only</i>' : ''}</div><div class="pr">${picked ? '<span style="color:#ff9a8e;font-size:10px">tap to cancel</span> ' : ''}$${c.price}</div></div>`; }
     if (c.kind === 'item') return `<div class="card ${gold - c.price < MIN_BET || inventory.length >= invMax() ? 'disabled' : ''}" data-i="${i}" style="background:${c.item.dark ? '#2a1420' : '#14202e'}"><div class="cat ${c.item.dark ? 'dark' : 'item'}">${c.item.dark ? '☠ SHADY DEALER' : '🧪 CONSUMABLE'}</div><div class="big">${c.item.icon}</div><div class="rar" style="color:${RARITY[c.item.r].color}">${RARITY[c.item.r].name}</div><div class="nm">${esc(c.item.name)}</div><div class="ds">${esc(c.item.desc)}</div><div class="pr">$${c.price}</div></div>`;
     const d = UNIT_TYPES[c.type];
     return `<div class="card unit ${gold - c.price < MIN_BET || roster.length >= rosterCap() ? 'disabled' : ''}" data-i="${i}"><div class="cat unit">⚔ RECRUIT</div><div class="big"><canvas class="ucv" data-type="${c.type}" width="13" height="15"></canvas></div><div class="rar" style="color:#8ec5ff">${d.kind.toUpperCase()}</div><div class="nm">${esc(d.name)}</div><div class="ds">${esc(d.desc)}<br><span class="muted">HP ${d.hp} · ATK ${d.atk}</span></div><div class="pr">$${c.price}</div></div>`;
   }).join('') + `<div style="display:flex;flex-direction:column;gap:6px;justify-content:center"><button id="reroll" ${gold < rerollCost ? 'disabled' : ''}>REROLL<br>$${rerollCost}</button><div class="muted" style="font-size:9px;text-align:center">next unlock:<br>${nextUnlockText()}</div><button id="codexbtn2" style="padding:4px 6px;font-size:10px">CODEX</button></div>`;
-  UI.shop.querySelectorAll('.card').forEach(el => el.addEventListener('click', () => buyCard(+el.dataset.i)));
+  UI.shop.classList.toggle('shop-dim', !!targeting);
+  UI.shop.querySelectorAll('.card').forEach(el => el.addEventListener('click', () => { if (targeting && targeting.index === +el.dataset.i) { targeting = null; toast('CANCELLED'); renderUI(); return; } buyCard(+el.dataset.i); }));
   UI.shop.querySelectorAll('canvas.ucv').forEach(cv => { const g = cv.getContext && cv.getContext('2d'); if (!g) return; const img = getSprite(UNIT_TYPES[cv.dataset.type].sprite, TEAMS[0]); cv.width = img.width; cv.height = img.height; g.imageSmoothingEnabled = false; g.drawImage(img, 0, 0); });
   const cb = $('codexbtn2'); if (cb) cb.onclick = () => { codexOpen = true; if (MOBILE) tab = 'codex'; renderUI(); };
   const rr = $('reroll'); if (rr) rr.addEventListener('click', () => { if (gold < rerollCost || gold - rerollCost < MIN_BET) { toast('KEEP AT LEAST $' + MIN_BET + ' FOR YOUR BET'); return SFX.deny(); } gold -= rerollCost; rollShop(); renderUI(); SFX.buy(); });
@@ -1943,7 +1952,8 @@ function renderUnitPanel() {
     ${Object.keys(perks).length ? `<div style="margin-top:4px;font-size:10px"><span class="muted">RELICS</span> ${RELICS.filter(r => perkLv(r.id)).map(r => `<span class="tag" style="background:#ffd93b" data-tip="<b>${esc(r.name)}</b> LV${perkLv(r.id)}<br>${esc(r.desc)}">${r.icon}${perkLv(r.id) > 1 ? 'x' + perkLv(r.id) : ''}</span>`).join(' ')}</div>` : ''}
     <div class="row" style="margin-top:4px"><span class="muted">peak $${peakGold} · won $${totalWon}</span><button id="cashout" class="${cashoutArm > 0 ? 'red' : ''}" style="padding:3px 8px;font-size:10px">${cashoutArm > 0 ? 'CONFIRM CASH OUT' : 'CASH OUT'}</button></div>
     ${nx ? `<div class="row" style="margin-top:4px"><span class="muted">right bets ${Math.min(leagueWins, L().winsReq)}/${L().winsReq}</span><span class="muted">fee <b style="color:#ffd93b">$${nx.fee}</b></span></div><button id="advance" class="${canAdvance() ? 'gold' : ''}" style="width:100%;margin-top:6px" ${canAdvance() ? '' : 'disabled'}>ADVANCE → ${esc(nx.name)}</button><div class="muted" style="font-size:10px;margin-top:3px">${esc(nx.perk)}</div>` : '<div class="muted" style="margin-top:4px">top league. nothing above but glory.</div>'}</div>`;
-  const hdr = `<div class="row"><h3 style="margin:0">YOUR ARMY <span class="muted" style="font-size:10px">${roster.length}/${rosterCap()}</span></h3><span><button id="codexbtn" style="padding:4px 8px;font-size:10px">CODEX</button> <button id="lbbtn" style="padding:4px 8px;font-size:10px">BOARDS</button></span></div>` + leagueBlock;
+  const applying = targeting ? `<div style="margin-bottom:6px;padding:6px 8px;border:2px solid #ffd93b;border-radius:6px;background:rgba(255,217,59,.1);font-size:11px">▶ APPLYING <b style="color:${targeting.up.color}">${targeting.up.icon || ''} ${esc(targeting.up.name)}</b> · tap one of your units${targeting.up.only ? ' (' + targeting.up.only.join('/') + ' only)' : ''} · <span class="muted">ESC cancels</span></div>` : '';
+  const hdr = applying + `<div class="row"><h3 style="margin:0">YOUR ARMY <span class="muted" style="font-size:10px">${roster.length}/${rosterCap()}</span></h3><span><button id="codexbtn" style="padding:4px 8px;font-size:10px">CODEX</button> <button id="lbbtn" style="padding:4px 8px;font-size:10px">BOARDS</button></span></div>` + leagueBlock;
   const bagStrip = MOBILE ? `<div class="row" style="margin:6px 0"><span class="muted">BAG</span><span style="display:flex;gap:6px">${Array.from({ length: invMax() }, (_, i) => { const it = inventory[i]; return it ? `<span class="tag" style="background:${RARITY[it.r].color};font-size:14px;padding:2px 6px" data-tip="<b>${esc(it.name)}</b><br>${esc(it.desc)}<br><i>usable during battle</i>">${it.icon}</span>` : `<span class="tag" style="background:#2a2440;color:#666;font-size:14px;padding:2px 6px">·</span>`; }).join('')}</span></div>` : '';
   if (!u) { UI.left.innerHTML = hdr + bagStrip + `<div class="muted" style="margin:6px 0">Tap a unit on the field to inspect it. Buy upgrade cards in the SHOP and apply them to your units. Units with 2 upgrades can EVOLVE.</div><div class="muted" style="font-size:10px;margin:4px 0">LINEUP · ${fielded().length}/${roster.length} fighting · benching recalls ${BOOKIE.name.toLowerCase()}: same army keeps the price, a changed one gets re-valued (upgrades included)</div><div>${roster.map(r => `<div class="en row" data-id="${r.id}" style="opacity:${r.benched ? .55 : 1}"><span><b style="color:${r.def.evolved ? '#ffd700' : '#fff'}">${esc(r.def.name)}</b> <span class="muted">LV${r.level} · ${Math.round(r.maxHp)} HP · ${Math.round(r.atk)} ATK</span> ${unitTags(r)}</span><button class="bench ${r.benched ? 'red' : 'blue'}" data-id="${r.id}" style="padding:3px 7px;font-size:9px;flex:none">${r.benched ? 'BENCHED' : 'FIGHTING'}</button></div>`).join('')}</div>`; UI.left.querySelectorAll('.en').forEach(el => el.onclick = () => { selected = roster.find(r => r.id === el.dataset.id); renderUI(); }); UI.left.querySelectorAll('.bench').forEach(b => b.onclick = ev => { ev.stopPropagation(); toggleBench(roster.find(r => r.id === b.dataset.id)); }); $('codexbtn').onclick = () => { codexOpen = true; renderUI(); }; $('lbbtn').onclick = () => { lbOpen = true; if (MOBILE) tab = 'boards'; renderUI(); }; const adv = $('advance'); if (adv) adv.onclick = advanceLeague; const co = $('cashout'); if (co) co.onclick = cashOut; return; }
   const mine = u.team.id === 0, d = u.def, canEvo = mine && !d.evolved && u.level >= 3, evoCost = 60 + round * 5, evo = d.evolved ? null : UNIT_TYPES[d.evo];
@@ -2149,7 +2159,10 @@ function renderDebug() {
   $('dbgstart').onclick = () => { restartGame(); renderDebug(); };
 }
 $('dbgbtn').onclick = () => { debugOpen = !debugOpen; renderDebug(); };
-function renderBattleBar() { const mods = rolledMods.map(m => `<span class="modchip" style="color:${m.color};border-color:${m.color}" data-tip="<b>${esc(m.def.name)}</b> · ${m.who}<br>${esc(m.def.desc)}">${esc(m.def.name)}${m.team === 0 ? ' ▲' : m.team === 1 ? ' ▼' : ''}</span>`).join(' '); UI.battlebar.innerHTML = (mods ? `<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center;margin-right:8px"><span class="muted" style="font-size:10px">MODS</span>${mods}</div>` : '') + `<button id="statsbtn" class="${statsOpen ? 'sel' : ''}">STATS</button><button id="spd">SPEED x${speed}</button><button id="mutebtn">${muted ? '🔇' : '🔊'}</button>`; $('statsbtn').onclick = () => { statsOpen = !statsOpen; renderUI(); }; $('spd').onclick = () => { speed = speed === 1 ? 2 : speed === 2 ? 3 : 1; renderBattleBar(); }; $('mutebtn').onclick = () => { muted = !muted; renderBattleBar(); }; }
+function setMuted(v) { muted = v; try { localStorage.setItem('pixelclash_mute', v ? '1' : '0'); } catch (e) {} const b = $('mutetop'); if (b) b.textContent = muted ? '🔇' : '🔊'; }
+$('mutetop').onclick = () => { audioInit(); setMuted(!muted); renderUI(); };
+setMuted(muted);
+function renderBattleBar() { const mods = rolledMods.map(m => `<span class="modchip" style="color:${m.color};border-color:${m.color}" data-tip="<b>${esc(m.def.name)}</b> · ${m.who}<br>${esc(m.def.desc)}">${esc(m.def.name)}${m.team === 0 ? ' ▲' : m.team === 1 ? ' ▼' : ''}</span>`).join(' '); UI.battlebar.innerHTML = (mods ? `<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center;margin-right:8px"><span class="muted" style="font-size:10px">MODS</span>${mods}</div>` : '') + `<button id="statsbtn" class="${statsOpen ? 'sel' : ''}">STATS</button><button id="spd">SPEED x${speed}</button><button id="mutebtn">${muted ? '🔇' : '🔊'}</button>`; $('statsbtn').onclick = () => { statsOpen = !statsOpen; renderUI(); }; $('spd').onclick = () => { speed = speed === 1 ? 2 : speed === 2 ? 3 : 1; renderBattleBar(); }; $('mutebtn').onclick = () => { setMuted(!muted); renderBattleBar(); }; }
 function renderUI() {
   const prep = phase === 'prep', merchant = phase === 'merchant', dicePhase = phase === 'dice', battle = phase === 'battle' || phase === 'ending', result = phase === 'result' && !(lastResult && lastResult.busted), over = phase === 'result' && lastResult && lastResult.busted;
   if (codexOpen && tab !== 'codex' && MOBILE && prep) tab = 'codex';
@@ -2208,7 +2221,7 @@ window.addEventListener('keydown', e => {
   else if (e.code === 'Backquote' || (e.shiftKey && e.code === 'KeyD')) { debugOpen = !debugOpen; renderDebug(); }
   else if (e.code === 'Escape') { targeting = null; selected = null; codexOpen = false; lbOpen = false; debugOpen = false; renderDebug(); if (useAim) { useAim = null; renderInv(); } renderUI(); }
   else if (/^Digit[1-4]$/.test(e.code) && phase === 'battle') useSlot(+e.code[5] - 1);
-  else if (e.key === 'm' || e.key === 'M') { muted = !muted; renderUI(); }
+  else if (e.key === 'm' || e.key === 'M') { setMuted(!muted); renderUI(); }
   else if (e.code === 'Enter' && phase === 'prep') startBattle();
   else if ((e.code === 'Enter' || e.code === 'Space') && phase === 'dice' && rolledMods.length === dice.length && dice.length) { e.preventDefault(); beginBattle(); }
   else if ((e.code === 'Enter' || e.code === 'Space') && phase === 'vs') { e.preventDefault(); launchBattle(); }
