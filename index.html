@@ -42,7 +42,14 @@
   .card .ds { font-size:10px; color:rgba(255,255,255,.7); flex:1; }
   .card .pr { font-size:12px; color:#ffd93b; font-weight:900; text-align:right; }
   .card.unit { background:#14202e; }
-  #left { left:14px; bottom:14px; width:240px; max-height:calc(100vh - 130px); overflow:auto; }
+  /* the army panel lives top-left under the HUD: the field's left half is where your units stand, so the box
+     must not cover it. Fielded units are handled on the field itself (click = card, drag = move); the panel
+     only lists the bench and the run status. */
+  #left { left:14px; top:104px; width:240px; max-height:calc(100vh - 124px); overflow:auto; }
+  #left .brow { display:flex; align-items:center; gap:6px; padding:4px 6px; margin:3px 0; border:2px solid #2a2440; border-radius:6px; background:#14112a; cursor:pointer; opacity:.7; }
+  #left .brow:hover { border-color:#fff; opacity:1; }
+  #left .brow b { flex:1; }
+  #focusbtn.sel { background:#3b7dd8; border-color:#8ec5ff; }
   /* the bet panel is a scrolling sheet with the FIGHT button pinned at the bottom, on every screen size */
   #right { right:14px; top:80px; width:300px; display:flex; flex-direction:column; padding:0; overflow:hidden; max-height:calc(100vh - 94px); }
   #right .body { overflow:auto; padding:12px; min-height:0; }
@@ -56,6 +63,10 @@
   .tag { display:inline-block; padding:0 4px; border-radius:3px; font-size:9px; margin:1px; color:#000; font-weight:900; }
   #wagers button { padding:6px 8px; font-size:11px; }
   #battlebar { left:50%; bottom:14px; transform:translateX(-50%); display:flex; gap:10px; padding:8px; flex-wrap:wrap; justify-content:center; align-items:center; max-width:94vw; }
+  .spdgrp { display:inline-flex; gap:0; border:2px solid #2a2440; border-radius:6px; overflow:hidden; }
+  .spdgrp button { border:0; border-radius:0; border-right:2px solid #2a2440; padding:6px 9px; min-width:34px; font-size:11px; }
+  .spdgrp button:last-child { border-right:0; } .spdgrp button.sel { background:#3b7dd8; color:#fff; }
+  .mobile #battlebar .spdgrp button { padding:8px 7px; min-width:30px; font-size:12px; }
   #stats { left:50%; top:80px; transform:translateX(-50%); width:min(920px, 94vw); max-height:60vh; overflow:auto; }
   #stats table { width:100%; border-collapse:collapse; font-size:11px; }
   #stats th { text-align:left; color:#ffd93b; padding:3px 6px; border-bottom:2px solid #2a2440; }
@@ -83,7 +94,8 @@
   .mobile #shop { flex-wrap:wrap; justify-content:center; }
   .mobile .card { width:calc(50% - 14px); min-height:96px; }
   .mobile #tabs { display:flex; bottom:0; padding-bottom:calc(4px + env(safe-area-inset-bottom)); }
-  .mobile #battlebar { bottom:6px; left:auto; right:6px; transform:none; max-width:calc(100% - 230px); padding:6px; gap:6px; }
+  .mobile #battlebar { bottom:6px; left:6px; right:6px; transform:none; max-width:none; padding:6px; gap:6px 8px; border-radius:10px; }
+  .mobile #battlebar .modrow { flex:1 1 100%; justify-content:center; margin:0 !important; }
   .mobile #battlebar .modchip { font-size:9px; padding:2px 5px; }
   .mobile #stats, .mobile #codex, .mobile #lb { top:60px; max-height:70vh; }
   .mobile #hint { display:none; }
@@ -109,8 +121,11 @@
   .prop .pt { flex:1; min-width:0; } .prop .pt b { display:block; font-size:11px; } .prop .pt span { font-size:9.5px; color:rgba(255,255,255,.6); }
   .prop .po { flex:none; font-weight:900; color:#ffd93b; font-size:13px; text-shadow:0 2px 0 #000; min-width:48px; text-align:right; }
   .prop.boost .po { color:#ff9f43; } .prop .po small { display:block; font-size:8px; color:rgba(255,255,255,.55); font-weight:normal; text-shadow:none; letter-spacing:1px; }
-  .ticket { display:flex; align-items:center; gap:6px; padding:4px 6px; border:2px dashed #3a3260; border-radius:6px; margin:4px 0; font-size:11px; background:rgba(0,0,0,.25); }
-  .ticket .tl { flex:1; min-width:0; } .ticket .tl small { color:rgba(255,255,255,.55); }
+  /* a ticket is two lines: the legs and odds on top, the stake controls underneath, so a long parlay title never
+     gets squeezed into a one-word column beside the buttons */
+  .ticket { display:flex; flex-wrap:wrap; align-items:center; gap:4px 6px; padding:4px 6px; border:2px dashed #3a3260; border-radius:6px; margin:4px 0; font-size:11px; background:rgba(0,0,0,.25); }
+  .ticket .tl { flex:1 1 100%; min-width:0; line-height:1.3; } .ticket .tl small { color:rgba(255,255,255,.55); }
+  .ticket .rm { margin-left:auto; }
   .ticket button { padding:3px 6px; font-size:10px; }
   .ticket.parlay { border-color:#c85cff; }
   #slipbox { left:14px; top:112px; width:280px; padding:8px 10px; font-size:12px; z-index:4; }
@@ -198,7 +213,6 @@
   .slot { touch-action:none; }
   .slot.dragging { opacity:.35; transform:scale(.9); }
   @keyframes slotpop { 0%{ transform:scale(.4) rotate(-15deg);} 60%{ transform:scale(1.25);} 100%{ transform:none;} }
-  body.prep:not(.mobile) #inv { top:112px; bottom:auto; }
   body.prep:not(.mobile) #inv:before { content:'BAG'; position:absolute; top:-14px; left:2px; font-size:9px; letter-spacing:2px; color:rgba(255,255,255,.5); }
   .mobile #inv { left:6px; bottom:6px; }
   .mobile .slot { width:46px; height:46px; font-size:22px; }
@@ -364,15 +378,35 @@ window.addEventListener('resize', resize);
 const cam = { x: 0, y: 0, z: 1, px: 0, py: 0, tx: 0, ty: 0, tz: 1, tpx: 0, tpy: 0 };
 function camIdentity() { return { x: W / 2, y: H / 2, z: 1, px: W / 2, py: H / 2 }; }
 function camZoomTab() { return phase === 'prep' && MOBILE && (tab === 'army' || tab === 'shop'); }
+// desktop: the camera closes in on your army while you are editing it (a unit of yours is open, a skill card is
+// waiting for a target, a unit is being dragged) or while FOCUS is pinned in the army panel
+let armyFocus = false, focusHoldUntil = 0; // focusHoldUntil: keep the zoom through the upgrade / landing animation after a purchase
+function camDesktopFocus() { return phase === 'prep' && !MOBILE && (armyFocus || !!targeting || !!unitDrag || realTime < focusHoldUntil || !!(selected && selected.team.id === 0 && !selected.benched)); }
+// the part of the screen not covered by panels: on a phone the strip between HUD and sheet, on desktop the gap
+// between the army panel, the bet sheet and the shop (measured from the DOM by renderUI)
+let camRects = null;
+function camView() {
+  if (MOBILE) return { left: 0, right: W, top: PORTRAIT ? 96 : 40, bottom: H - 46 - H * 0.30 - 8 };
+  const r = camRects || {};
+  return { left: (r.leftRight || 268) + 14, right: (r.rightLeft || W - 314) - 14, top: 96, bottom: (r.shopTop || H - 180) - 12 };
+}
+function measurePanels() {
+  if (MOBILE) { camRects = null; return; }
+  const rect = el => { if (!el || el.hidden) return null; const r = el.getBoundingClientRect(); return r && r.width ? r : null; };
+  const l = rect(UI.left), rr = rect(UI.right), s = rect(UI.shop);
+  camRects = { leftRight: l && l.right ? l.right : 0, rightLeft: rr && rr.left ? rr.left : 0, shopTop: s && s.top ? s.top : 0 };
+}
 function camTarget() {
   const id = camIdentity();
-  if (!camZoomTab() || unitDrag) return unitDrag ? { x: cam.x, y: cam.y, z: cam.z, px: cam.px, py: cam.py } : id;
+  if (unitDrag) return { x: cam.x, y: cam.y, z: cam.z, px: cam.px, py: cam.py };
+  if (!camZoomTab() && !camDesktopFocus()) return id;
   const list = units.filter(u => u.team.id === 0 && !u.dead); if (!list.length) return id;
   let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
   for (const u of list) { const w = unitW(u), h = unitH(u); x0 = Math.min(x0, u.x - w / 2); x1 = Math.max(x1, u.x + w / 2); y0 = Math.min(y0, u.y - h - 16); y1 = Math.max(y1, u.y + 8); }
-  const top = PORTRAIT ? 96 : 40, bottom = H - 46 - H * 0.30 - 8, padX = 36, padY = 14;
-  const z = clamp(Math.min(W / (x1 - x0 + padX * 2), (bottom - top) / (y1 - y0 + padY * 2)), 1, 2.2);
-  const px = W / 2, py = (top + bottom) / 2;
+  const v = camView(), padX = 36, padY = 14;
+  if (v.right - v.left < 120 || v.bottom - v.top < 80) return id;
+  const z = clamp(Math.min((v.right - v.left) / (x1 - x0 + padX * 2), (v.bottom - v.top) / (y1 - y0 + padY * 2)), 1, 2.2);
+  const px = (v.left + v.right) / 2, py = (v.top + v.bottom) / 2;
   return { x: clamp((x0 + x1) / 2, px / z, W - (W - px) / z), y: clamp((y0 + y1) / 2, py / z, H - (H - py) / z), z, px, py };
 }
 function camSnap() { const t = camIdentity(); Object.assign(cam, { x: t.x, y: t.y, z: t.z, px: t.px, py: t.py, tx: t.x, ty: t.y, tz: t.z, tpx: t.px, tpy: t.py }); }
@@ -498,6 +532,8 @@ const FONT = {
   '-': ['000', '000', '111', '000', '000'], '.': ['0', '0', '0', '0', '1'], '%': ['101', '001', '010', '100', '101'],
   ':': ['0', '1', '0', '1', '0'], ' ': ['00', '00', '00', '00', '00'], '?': ['111', '001', '011', '000', '010'],
   '$': ['010', '111', '110', '011', '111'], '/': ['001', '001', '010', '100', '100'], ',': ['0', '0', '0', '1', '1'], "'": ['1', '1', '0', '0', '0'],
+  '#': ['01010', '11111', '01010', '11111', '01010'], '(': ['01', '10', '10', '10', '01'], ')': ['10', '01', '01', '01', '10'],
+  '·': ['0', '0', '1', '0', '0'], '"': ['101', '101', '000', '000', '000'], '*': ['101', '010', '111', '010', '101'],
 };
 function textWidth(str, s) { let w = 0; for (const ch of str) { const g = FONT[ch] || FONT['?']; w += g[0].length * s + s; } return w - s; }
 function forEachTextPixel(str, x, y, s, cb) {
@@ -989,7 +1025,11 @@ let odds = { p: 0.5, pb: 0, pr: 0, ready: false };
 let slip = [], board = [], boardCands = [], chip = 25;
 const slipStaked = () => slip.reduce((a, t) => a + t.stake, 0);
 const slipToWin = () => slip.reduce((a, t) => a + ticketProfit(t), 0);
-let selected = null, targeting = null, shopCards = [], enemyName = '', speed = 1, statsOpen = false;
+let selected = null, targeting = null, shopCards = [], enemyName = '', speed = 1, paused = false, statsOpen = false;
+const SPEEDS = [0.25, 0.5, 1, 2, 3];
+const fmtSpeed = s => s === 0.25 ? '¼' : s === 0.5 ? '½' : String(s);
+function setSpeed(s) { speed = s; paused = false; renderBattleBar(); SFX.buy(); }
+function togglePause() { if (phase !== 'battle') return; paused = !paused; renderBattleBar(); SFX.buy(); }
 const MAX_ROSTER_ABS = 10;
 const clouds = [];
 function addTrauma(v) { trauma = Math.min(0.85, trauma + v * 0.75); }
@@ -1530,6 +1570,7 @@ const fmtK = n => n >= 1000 ? ((n / 1000) % 1 ? (n / 1000).toFixed(1) : String(n
 const DMG_LADDER = [250, 500, 750, 1000, 1500, 2000, 3000, 4000, 6000, 8000, 12000, 16000, 24000, 32000];
 const ladder = (lo, hi) => DMG_LADDER.filter(n => n >= lo && n <= hi);
 function unitLabel(u, list) { const same = list.filter(o => o.def.name === u.def.name); return u.def.name + (same.length > 1 ? ' #' + (same.indexOf(u) + 1) : ''); }
+function unitTag(u) { return unitLabel(u, u.team.id === 0 ? roster : enemyUnits); }
 function topKiller(l, ids) {
   let best = 0; for (const id of ids) best = Math.max(best, l.kills[id] || 0);
   if (!best) return null;
@@ -1897,7 +1938,7 @@ function layoutTeam(list, teamId) {
   if (teamId === 0) for (const u of list) if (u.slot) { u.x = clamp(24 + u.slot.fx * (DRAG_X_MAX() - 24), 24, W - 24); u.y = clamp(FIELD_TOP + u.slot.fy * (FIELD_BOTTOM - FIELD_TOP), FIELD_TOP, FIELD_BOTTOM); }
 }
 function startPrep() {
-  phase = 'prep'; selected = null; targeting = null; tab = 'bet'; oddsLocked = false; BOOKIE.line = ''; BOOKIE.mood = 'think'; BOOKIE.reacted = false; lockedSig = ''; lockedOdds = null; priceMemory = {};
+  phase = 'prep'; selected = null; targeting = null; tab = 'bet'; armyFocus = false; oddsLocked = false; BOOKIE.line = ''; BOOKIE.mood = 'think'; BOOKIE.reacted = false; lockedSig = ''; lockedOdds = null; priceMemory = {};
   slip = []; board = []; boardCands = []; chip = L().chips[0]; battleLog = null; battleTime = 0;
   if (gold < MIN_BET) { const marker = 25; gold = marker; goldShow = 0; setTimeout(() => { banner('THE HOUSE FRONTS YOU $' + marker, '#ffd93b', { color2: '#fff', scale: S * 2.2, life: 2.4, sub: 'ONE TICKET. MAKE IT COUNT.', subColor: '#ff5a3c' }); awardGold(marker, W / 2, H * 0.4, { quiet: true }); }, 300); }
   for (const t of TEAMS) { t.graveyard = []; t.streak = 0; }
@@ -1931,7 +1972,7 @@ function beginBattle() {
 }
 function launchBattle() {
   if (phase !== 'vs') return;
-  phase = 'battle'; battleTime = 0; winner = null; suddenDeath = false; sdTick = 0; dice = []; diceIdle = 0;
+  phase = 'battle'; battleTime = 0; winner = null; suddenDeath = false; sdTick = 0; dice = []; diceIdle = 0; paused = false;
   for (const u of units) { u.kb.x = u.kb.y = 0; u.landed = true; u.auraT = 0; }
   battleEvents.sort((a, b) => a.t - b.t); planChests(); useAim = null;
   banner('FIGHT!', '#ffd93b', { color2: '#fff', scale: S * 3.4, life: 1.4, shake: 1 });
@@ -1939,6 +1980,7 @@ function launchBattle() {
   renderUI();
 }
 function endBattle() {
+  paused = false;
   phase = 'result'; finalizeLog();
   const won = winner === TEAMS[0], mods = rolledMods.map(m => m.def.name + (m.team === 0 ? ' (you)' : m.team === 1 ? ' (enemy)' : ''));
   if (!won) {
@@ -2051,7 +2093,7 @@ function update(rdt) {
   let dt = rdt;
   if (!SIM) {
     realTime += rdt; sfxBudget = 7;
-    let ts = phase === 'battle' ? speed : 1;
+    let ts = phase === 'battle' ? (paused ? 0 : speed) : 1;
     if (slowmo > 0) { slowmo -= rdt; ts *= 0.3; }
     if (hitstop > 0) { hitstop -= rdt; ts *= 0.04; }
     dt = rdt * ts;
@@ -2226,6 +2268,8 @@ function drawUnit(u) {
   ctx.fillStyle = u.ultReady ? (Math.sin(realTime * 15) > 0 ? '#fff' : '#ffd700') : '#c85cff'; ctx.fillRect(bx, by + bh + 4, bw * clamp(u.ult / 100, 0, 1), 2);
   if (u.def.evolved) drawText(u.def.name, u.x, by - S * 2.6, Math.max(1, S * 0.5), '#ffd700', { shadow: false, outlineColor: u.team.p });
   else if (u.level > 1) drawText('LV' + u.level, u.x, by - S * 2.6, Math.max(1, S * 0.5), u.team.S, { shadow: false, outlineColor: u.team.p });
+  // prep only: a quiet name tag at the feet so two knights can be told apart (matches the roster and the hero card)
+  if (phase === 'prep' && !u.dead && u.landed && !SIM) drawText(unitTag(u), u.x, u.y + S * 2.2, Math.max(1, S * 0.42), '#fff', { shadow: false, outlineColor: u.team.p, alpha: 0.6 });
 }
 function drawParticle(p) {
   const lifeR = p.life / p.maxLife;
@@ -2275,8 +2319,8 @@ function drawClock(x, y, sc) {
   const col = sd ? (Math.sin(realTime * 12) > 0 ? '#ff2a4a' : '#ffd43b') : left < 8 ? '#ff9f43' : '#fff';
   const txt = (sd ? '+' : '') + (sd ? t - sdStart : t).toFixed(1) + 'S';
   drawText(txt, x, y, sc * (sd ? 1.15 : 1), col, { color2: sd ? '#fff' : '#ffd93b' });
-  const sub = sd ? 'SUDDEN DEATH' : left < 8 ? 'SUDDEN DEATH IN ' + Math.ceil(left) : speed > 1 ? 'SPEED X' + speed : '';
-  if (sub) drawText(sub, x, y + sc * 6.5, Math.max(1.4, sc * 0.5), sd ? '#ff2a4a' : '#fff', { alpha: sd ? 1 : 0.7 });
+  const sub = paused && phase === 'battle' ? 'PAUSED' : sd ? 'SUDDEN DEATH' : left < 8 ? 'SUDDEN DEATH IN ' + Math.ceil(left) : speed !== 1 ? 'SPEED X' + speed : '';
+  if (sub) drawText(sub, x, y + sc * 6.5, Math.max(1.4, sc * 0.5), paused ? (Math.sin(realTime * 6) > 0 ? '#ffd93b' : '#fff') : sd ? '#ff2a4a' : '#fff', { alpha: sd || paused ? 1 : 0.7 });
 }
 function drawHUD() {
   const s = Math.max(2, S * 0.8), s2 = MOBILE ? 1.6 : Math.max(1, S * 0.6), lx = MOBILE ? 16 : 40, rx = MOBILE ? W - 16 : W - 40;
@@ -2387,15 +2431,14 @@ function buyCard(i) {
   if (c.kind === 'unit') {
     if (roster.length >= rosterCap()) { toast('ROSTER FULL'); SFX.deny(); return; }
     gold -= c.price; const u = spawnUnit(0, c.type, W * 0.2, (FIELD_TOP + FIELD_BOTTOM) / 2, true); roster.push(u); shopCards.splice(i, 1);
-    placeFormations(); u.spawnT = 0.5; u.spawnDur = 0.5; scheduleOdds(); renderUI(); SFX.buy(); selected = u;
-    renderUI();
+    placeFormations(); u.spawnT = 0.5; u.spawnDur = 0.5; selected = null; focusHoldUntil = realTime + 1.8; scheduleOdds(); renderUI(); SFX.buy();
   } else { targeting = { card: c, up: c.up, index: i }; selected = null; toast(MOBILE ? 'TAP ONE OF YOUR UNITS ON THE FIELD' : 'CLICK ONE OF YOUR UNITS'); if (MOBILE) tab = 'army'; renderUI(); }
 }
 function applyCardTo(u) {
   const c = targeting.card; if (!c) return;
   if (!upgradeAllowed(u, c.up)) { toast(c.up.only ? 'ONLY FOR ' + c.up.only.join('/').toUpperCase() + ' UNITS' : 'ALREADY HAS THIS'); SFX.deny(); return; }
   gold -= c.price; shopCards.splice(targeting.index, 1); targeting = null;
-  applyUpgrade(u, c.up); u.hp = u.maxHp; selected = u; scheduleOdds(); renderUI(); SFX.buy();
+  applyUpgrade(u, c.up); u.hp = u.maxHp; selected = null; focusHoldUntil = realTime + 1.8; scheduleOdds(); renderUI(); SFX.buy();
 }
 function threatTags(list) {
   const n = list.length || 1, kinds = list.map(u => u.def.kind), tags = [];
@@ -2461,16 +2504,22 @@ function renderUnitPanel() {
     <div class="row" style="margin-top:4px"><span class="muted">peak $${peakGold} · won $${totalWon}</span><button id="cashout" class="${cashoutArm > 0 ? 'red' : ''}" style="padding:3px 8px;font-size:10px">${cashoutArm > 0 ? 'CONFIRM CASH OUT' : 'CASH OUT'}</button></div>
     ${nx ? `<div style="margin-top:6px"><div class="row" style="font-size:11px"><span class="muted">promotion</span><b>${Math.min(leagueWins, L().winsReq)}/${L().winsReq} wins</b></div><div class="bar" style="margin:3px 0"><i style="width:${Math.min(100, leagueWins / L().winsReq * 100)}%;background:${nx.color}"></i></div><div class="muted" style="font-size:10px">next: <b style="color:${nx.color}">${esc(nx.name)}</b> · automatic, no fee · ${esc(nx.perk)}</div></div>` : '<div class="muted" style="margin-top:4px">top league. nothing above but glory.</div>'}</div>`;
   const applying = targeting ? `<div style="margin-bottom:6px;padding:6px 8px;border:2px solid #ffd93b;border-radius:6px;background:rgba(255,217,59,.1);font-size:11px">▶ APPLYING <b style="color:${targeting.up.color}">${targeting.up.icon || ''} ${esc(targeting.up.name)}</b> · tap one of your units${targeting.up.only ? ' (' + targeting.up.only.join('/') + ' only)' : ''} · <span class="muted">ESC cancels</span></div>` : '';
-  const hdr = applying + `<div class="row"><h3 style="margin:0">YOUR ARMY <span class="muted" style="font-size:10px">${roster.length}/${rosterCap()}</span></h3><span><button id="codexbtn" style="padding:4px 8px;font-size:10px">CODEX</button> <button id="lbbtn" style="padding:4px 8px;font-size:10px">BOARDS</button></span></div>` + leagueBlock;
+  const hdr = applying + `<div class="row"><h3 style="margin:0">YOUR ARMY <span class="muted" style="font-size:10px">${roster.length}/${rosterCap()}</span></h3><span>${MOBILE ? '' : `<button id="focusbtn" class="${armyFocus ? 'sel' : ''}" style="padding:4px 8px;font-size:10px" title="keep the camera on your army while you shop">${armyFocus ? '🔍 FOCUSED' : '🔍 FOCUS'}</button> `}<button id="codexbtn" style="padding:4px 8px;font-size:10px">CODEX</button> <button id="lbbtn" style="padding:4px 8px;font-size:10px">BOARDS</button></span></div>` + leagueBlock;
   const bagStrip = MOBILE ? `<div class="row" style="margin:6px 0"><span class="muted">BAG</span><span style="display:flex;gap:6px">${Array.from({ length: invMax() }, (_, i) => { const it = inventory[i]; return it ? `<span class="tag" style="background:${RARITY[it.r].color};font-size:14px;padding:2px 6px" data-tip="<b>${esc(it.name)}</b><br>${esc(it.desc)}<br><i>usable during battle</i>">${it.icon}</span>` : `<span class="tag" style="background:#2a2440;color:#666;font-size:14px;padding:2px 6px">·</span>`; }).join('')}</span></div>` : '';
   // The panel is the roster and nothing else: a list of names you tap. Every
   // stat, upgrade and action for one unit lives in the floating card, so the
   // two are never showing the same numbers at the same time.
-  const rows = roster.map(r => `<div class="en urow${selected === r ? ' usel' : ''}" data-id="${r.id}" style="opacity:${r.benched ? .55 : 1}"><span class="chev">›</span><b style="color:${r.def.evolved ? '#ffd700' : '#fff'}">${esc(r.def.name)}</b> <span class="muted">LV${r.level}</span>${r.benched ? '<span class="benchtag">BENCHED</span>' : ''}</div>`).join('');
-  UI.left.innerHTML = hdr + bagStrip
-    + `<div class="muted" style="margin:6px 0;font-size:10px">LINEUP · ${fielded().length}/${roster.length} fighting · tap a name, or the unit on the field, for its stats, upgrades and evolution · <b style="color:#8ec5ff">drag a unit on the field to move it</b>, drop it on a teammate to swap</div>`
-    + `<div>${rows}</div>`
+  // Desktop: your fighters are handled on the field (click for the card, drag to move), so the panel only lists
+  // the bench. Phones keep the full roster list because the sprites are small there.
+  const rowOf = r => `<div class="en urow${selected === r ? ' usel' : ''}" data-id="${r.id}" style="opacity:${r.benched ? .55 : 1}"><span class="chev">›</span><b style="color:${r.def.evolved ? '#ffd700' : '#fff'}">${esc(unitTag(r))}</b> <span class="muted">LV${r.level}</span>${r.benched ? '<span class="benchtag">BENCHED</span>' : ''}</div>`;
+  const benchRow = r => `<div class="brow urow${selected === r ? ' usel' : ''}" data-id="${r.id}"><b style="color:${r.def.evolved ? '#ffd700' : '#fff'}">${esc(unitTag(r))} <span class="muted">LV${r.level}</span></b><span class="muted" style="font-size:9px">BENCHED · click</span></div>`;
+  const bench = roster.filter(r => r.benched);
+  UI.left.innerHTML = hdr + bagStrip + (MOBILE
+    ? `<div class="muted" style="margin:6px 0;font-size:10px">LINEUP · ${fielded().length}/${roster.length} fighting · tap a name, or the unit on the field, for its stats, upgrades and evolution · <b style="color:#8ec5ff">drag a unit on the field to move it</b>, drop it on a teammate to swap</div><div>${roster.map(rowOf).join('')}</div>`
+    : `<div class="muted" style="margin:8px 0 4px;font-size:10px"><b style="color:#8ec5ff">${fielded().length} ON THE FIELD</b> · click a unit for its stats, upgrades and evolution · drag it to move, drop it on a teammate to swap</div>`
+      + (bench.length ? `<div class="muted" style="margin:6px 0 2px;font-size:10px">BENCH · ${bench.length}</div><div>${bench.map(benchRow).join('')}</div>` : ''))
     + `<div class="muted" style="font-size:10px;margin:6px 0 0">benching recalls ${BOOKIE.name.toLowerCase()}: same army keeps the price, a changed one gets re-valued (upgrades included)</div>`;
+  const fb = $('focusbtn'); if (fb) fb.onclick = () => { armyFocus = !armyFocus; renderUnitPanel(); SFX.buy(); };
   UI.left.querySelectorAll('.urow').forEach(el => el.onclick = () => {
     const r = roster.find(x => x.id === el.dataset.id);
     selected = selected === r ? null : r;   // tapping the open one closes it
@@ -2642,7 +2691,7 @@ function renderHeroCard() {
   const d = u.def, mine = u.team.id === 0;
   const canEvo = mine && !d.evolved && u.level >= 3, evoCost = 60 + round * 5, evo = d.evolved ? null : UNIT_TYPES[d.evo];
   el.innerHTML = `<div class="hcbody"><div class="row" style="align-items:flex-start">
-      <div class="nm" style="color:${mine ? '#8ec5ff' : '#ff9a8e'}">${esc(d.name)} <span class="muted" style="font-size:10px;font-weight:normal">LV${u.level} · ${d.kind.toUpperCase()}${mine ? '' : ' · ENEMY'}${mine && u.benched ? ' · BENCHED' : ''}</span></div>
+      <div class="nm" style="color:${mine ? '#8ec5ff' : '#ff9a8e'}">${esc(unitTag(u))} <span class="muted" style="font-size:10px;font-weight:normal">LV${u.level} · ${d.kind.toUpperCase()}${mine ? '' : ' · ENEMY'}${mine && u.benched ? ' · BENCHED' : ''}</span></div>
       <button id="hcclose" style="padding:2px 7px;font-size:11px;flex:none;margin-left:6px">✕</button></div>
     <div class="st"><span><span class="muted">HP</span> <b>${Math.round(u.maxHp)}</b>${u.shieldMax ? ` <span style="color:#7fd6ff">+${Math.round(u.shieldMax)}</span>` : ''}</span><span><span class="muted">ATK</span> <b>${Math.round(u.atk)}</b> <span class="muted">/${(d.cd / u.atkSpeed).toFixed(1)}s</span></span><span><span class="muted">CRIT</span> <b>${Math.round(u.crit * 100)}%</b></span><span><span class="muted">RANGE</span> <b>${Math.round(u.range)}</b></span><span><span class="muted">SPEED</span> <b>${Math.round(u.speed)}</b></span><span><span class="muted">POWER</span> <b style="color:#ffd93b">${Math.round(unitPower(u))}</b></span></div>
     <div><span class="muted">ULT</span> <b style="color:#c85cff">${esc(d.ultName)}</b> <span class="muted">${esc(d.ultDesc)}</span></div>
@@ -2710,7 +2759,14 @@ $('dbgbtn').onclick = () => { debugOpen = !debugOpen; renderDebug(); };
 function setMuted(v) { muted = v; try { localStorage.setItem('pixelclash_mute', v ? '1' : '0'); } catch (e) {} const b = $('mutetop'); if (b) b.textContent = muted ? '🔇' : '🔊'; }
 $('mutetop').onclick = () => { audioInit(); setMuted(!muted); renderUI(); };
 setMuted(muted);
-function renderBattleBar() { const mods = rolledMods.map(m => `<span class="modchip" style="color:${m.color};border-color:${m.color}" data-tip="<b>${esc(m.def.name)}</b> · ${m.who}<br>${esc(m.def.desc)}">${esc(m.def.name)}${m.team === 0 ? ' ▲' : m.team === 1 ? ' ▼' : ''}</span>`).join(' '); UI.battlebar.innerHTML = (mods ? `<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center;margin-right:8px"><span class="muted" style="font-size:10px">MODS</span>${mods}</div>` : '') + `<button id="statsbtn" class="${statsOpen ? 'sel' : ''}">STATS</button><button id="spd">SPEED x${speed}</button><button id="mutebtn">${muted ? '🔇' : '🔊'}</button>`; $('statsbtn').onclick = () => { statsOpen = !statsOpen; renderUI(); }; $('spd').onclick = () => { speed = speed === 1 ? 2 : speed === 2 ? 3 : 1; renderBattleBar(); }; $('mutebtn').onclick = () => { setMuted(!muted); renderBattleBar(); }; }
+function renderBattleBar() { const mods = rolledMods.map(m => `<span class="modchip" style="color:${m.color};border-color:${m.color}" data-tip="<b>${esc(m.def.name)}</b> · ${m.who}<br>${esc(m.def.desc)}">${esc(m.def.name)}${m.team === 0 ? ' ▲' : m.team === 1 ? ' ▼' : ''}</span>`).join(' '); UI.battlebar.innerHTML = (mods ? `<div class="modrow" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center;margin-right:8px"><span class="muted" style="font-size:10px">MODS</span>${mods}</div>` : '') + `<button id="statsbtn" class="${statsOpen ? 'sel' : ''}">STATS</button><span class="spdgrp"><button id="pausebtn" class="${paused ? 'sel' : ''}" title="pause (space)">${paused ? '▶' : '❚❚'}</button>${SPEEDS.map(s => `<button class="spdbtn ${speed === s && !paused ? 'sel' : ''}" data-s="${s}" title="speed x${s}">${fmtSpeed(s)}x</button>`).join('')}</span>`; $('statsbtn').onclick = () => { statsOpen = !statsOpen; renderUI(); }; $('pausebtn').onclick = togglePause; UI.battlebar.querySelectorAll('.spdbtn').forEach(b => b.onclick = () => setSpeed(+b.dataset.s)); placeMobileBattleChrome(); }
+// on a phone the bag and the mute button stack on top of the full-width battle bar instead of colliding with it
+function placeMobileBattleChrome() {
+  const battle = phase === 'battle' || phase === 'ending', mt = $('mutetop');
+  if (!MOBILE || !battle || UI.battlebar.hidden) { UI.inv.style.bottom = ''; if (mt) mt.style.bottom = ''; return; }
+  const h = (UI.battlebar.offsetHeight || 64) + 12;
+  UI.inv.style.bottom = h + 'px'; if (mt) mt.style.bottom = h + 'px';
+}
 function renderUI() {
   const prep = phase === 'prep', merchant = phase === 'merchant', dicePhase = phase === 'dice', battle = phase === 'battle' || phase === 'ending', over = phase === 'result' && lastResult && lastResult.over, result = phase === 'result' && !over;
   if (codexOpen && tab !== 'codex' && MOBILE && prep) tab = 'codex';
@@ -2732,6 +2788,8 @@ function renderUI() {
   if (codexOpen) renderCodex();
   if (lbOpen) renderLB();
   renderHeroCard(); renderInv(); renderSlipBox(); renderDebug();
+  placeMobileBattleChrome();
+  if (prep) measurePanels();
 }
 // ---------- input ----------
 canvas.addEventListener('pointermove', e => { aimPos = { x: e.clientX, y: e.clientY }; });
@@ -2811,6 +2869,7 @@ window.addEventListener('keydown', e => {
   else if (e.code === 'Backquote' || (e.shiftKey && e.code === 'KeyD')) { debugOpen = !debugOpen; renderDebug(); }
   else if (e.code === 'Escape') { targeting = null; selected = null; codexOpen = false; lbOpen = false; debugOpen = false; renderDebug(); if (useAim) { useAim = null; renderInv(); } renderUI(); }
   else if (/^Digit[1-4]$/.test(e.code) && phase === 'battle') useSlot(+e.code[5] - 1);
+  else if (e.code === 'Space' && phase === 'battle') { e.preventDefault(); togglePause(); }
   else if (e.key === 'm' || e.key === 'M') { setMuted(!muted); renderUI(); }
   else if (e.code === 'Enter' && phase === 'prep') startBattle();
   else if ((e.code === 'Enter' || e.code === 'Space') && phase === 'dice' && rolledMods.length === dice.length && dice.length) { e.preventDefault(); beginBattle(); }
