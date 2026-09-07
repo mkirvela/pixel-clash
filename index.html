@@ -2821,7 +2821,9 @@ window.addEventListener('pointerdown', () => audioInit(), { once: true });
 
 
 // ---------- first-launch intro comic: "The Back Room" (shown once; replay from debug or codex) ----------
-function introSeen() { if (typeof window !== 'undefined' && window.SKIP_INTRO) return true; try { return localStorage.getItem('pixelclash_intro_seen_game') === '1'; } catch (e) { return false; } }
+// The first-launch comic is parked (2026-09-07): flip INTRO_ENABLED to bring it back. Replay from the debug menu / Codex still works.
+const INTRO_ENABLED = typeof window !== 'undefined' && !!window.FORCE_INTRO; // false in the game; harnesses set FORCE_INTRO
+function introSeen() { if (!INTRO_ENABLED) return true; if (typeof window !== 'undefined' && window.SKIP_INTRO) return true; try { return localStorage.getItem('pixelclash_intro_seen_game') === '1'; } catch (e) { return false; } }
 function runIntro(onDone) {
   const root = document.createElement('div'); root.id = 'intro';
   root.innerHTML = `<div id="intro_stage"><canvas id="intro_cv" width="960" height="540"></canvas><div class="halftone"></div><div id="intro_ov"></div><button id="intro_skip">SKIP ▸</button><div id="intro_hint">TAP TO CONTINUE</div><div id="intro_progress"><i></i></div><button id="intro_cta">⚔ PLACE YOUR BETS</button></div>`;
