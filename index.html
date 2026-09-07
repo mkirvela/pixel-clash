@@ -7,6 +7,8 @@
 <style>
   html, body { margin:0; height:100%; background:#0b0a14; overflow:hidden; font-family:"Courier New", monospace; user-select:none; -webkit-user-select:none; color:#fff; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
   canvas { display:block; }
+  #c { touch-action:none; }
+  .mobile.zoomtab #left, .mobile.zoomtab #shop { max-height:30vh; }
   [hidden] { display:none !important; }
   .panel { position:fixed; box-sizing:border-box; background:rgba(14,11,28,.88); border:3px solid #2a2440; box-shadow:0 0 0 2px #0b0a14, 0 8px 24px rgba(0,0,0,.6); border-radius:8px; padding:12px; font-size:12px; letter-spacing:.5px; }
   .panel h3 { margin:0 0 8px; font-size:13px; color:#ffd93b; text-shadow:0 2px 0 #000; letter-spacing:2px; }
@@ -41,7 +43,11 @@
   .card .pr { font-size:12px; color:#ffd93b; font-weight:900; text-align:right; }
   .card.unit { background:#14202e; }
   #left { left:14px; bottom:14px; width:240px; max-height:calc(100vh - 130px); overflow:auto; }
-  #right { right:14px; top:80px; width:270px; }
+  /* the bet panel is a scrolling sheet with the FIGHT button pinned at the bottom, on every screen size */
+  #right { right:14px; top:80px; width:300px; display:flex; flex-direction:column; padding:0; overflow:hidden; max-height:calc(100vh - 94px); }
+  #right .body { overflow:auto; padding:12px; min-height:0; }
+  #right .foot { flex:none; padding:8px 12px; background:#14112a; border-top:2px solid #2a2440; }
+  #right .foot #fight { margin-top:0; }
   .row { display:flex; justify-content:space-between; gap:6px; align-items:center; }
   .bar { height:10px; background:#0b0a14; border:1px solid #000; margin:3px 0 6px; }
   .bar i { display:block; height:100%; }
@@ -94,6 +100,40 @@
   .mobile.land h3 { margin:0 0 4px; font-size:12px; }
   .betrow button { padding:8px 6px; font-size:12px; line-height:1.2; }
   .chips button { padding:6px 8px; font-size:11px; }
+  /* the prop board: one row per proposition, odds on the right like a ticket stub */
+  .prop { display:flex; align-items:center; gap:6px; padding:5px 6px; border:2px solid #2a2440; border-radius:6px; background:#14112a; margin:4px 0; cursor:pointer; transition:transform .06s, border-color .06s; }
+  .prop:hover { border-color:#fff; transform:translateY(-1px); }
+  .prop.on { border-color:#ffd93b; background:rgba(255,217,59,.1); }
+  .prop.off { opacity:.45; cursor:not-allowed; }
+  .prop .pc { flex:none; font-size:8px; letter-spacing:1px; font-weight:900; color:#000; padding:1px 4px; border-radius:3px; width:46px; text-align:center; }
+  .prop .pt { flex:1; min-width:0; } .prop .pt b { display:block; font-size:11px; } .prop .pt span { font-size:9.5px; color:rgba(255,255,255,.6); }
+  .prop .po { flex:none; font-weight:900; color:#ffd93b; font-size:13px; text-shadow:0 2px 0 #000; min-width:48px; text-align:right; }
+  .prop.boost .po { color:#ff9f43; } .prop .po small { display:block; font-size:8px; color:rgba(255,255,255,.55); font-weight:normal; text-shadow:none; letter-spacing:1px; }
+  .ticket { display:flex; align-items:center; gap:6px; padding:4px 6px; border:2px dashed #3a3260; border-radius:6px; margin:4px 0; font-size:11px; background:rgba(0,0,0,.25); }
+  .ticket .tl { flex:1; min-width:0; } .ticket .tl small { color:rgba(255,255,255,.55); }
+  .ticket button { padding:3px 6px; font-size:10px; }
+  .ticket.parlay { border-color:#c85cff; }
+  #slipbox { left:14px; top:112px; width:280px; padding:8px 10px; font-size:12px; z-index:4; }
+  #slipbox .trow { display:flex; gap:7px; align-items:center; padding:4px 4px; margin:0 -4px; border-bottom:1px dashed rgba(255,255,255,.1); border-radius:4px; }
+  #slipbox .trow .st { flex:none; width:46px; font-size:9px; font-weight:900; letter-spacing:1px; text-align:center; }
+  #slipbox .trow .tn { flex:1; min-width:0; line-height:1.25; }
+  #slipbox .trow .tv { flex:none; color:rgba(255,255,255,.6); font-size:10px; text-align:right; max-width:40%; }
+  #slipbox .trow.live .st { color:#8ec5ff; }
+  /* resolved rows get a rubber stamp: bordered, tilted, slammed in on the render that first shows the new status */
+  #slipbox .trow.hit, #slipbox .trow.bust { color:#fff; }
+  #slipbox .trow.hit { background:rgba(125,255,138,.14); } #slipbox .trow.bust { background:rgba(255,90,60,.16); }
+  #slipbox .trow.hit .st, #slipbox .trow.bust .st { border:2px solid currentColor; border-radius:3px; padding:1px 2px; transform:rotate(-6deg); font-size:10px; }
+  #slipbox .trow.hit .st { color:#7dff8a; } #slipbox .trow.bust .st { color:#ff5a3c; }
+  #slipbox .trow.bust .tn { text-decoration:line-through; opacity:.6; }
+  #slipbox .trow.flash .st { animation:stamp .3s cubic-bezier(.2,1.6,.4,1); }
+  #slipbox .trow.flash { animation:flash .5s; }
+  @keyframes stamp { from { transform:scale(2.4) rotate(-22deg); opacity:0; } to { transform:scale(1) rotate(-6deg); opacity:1; } }
+  .mobile #slipbox { left:6px; top:44px; width:min(46vw, 210px); font-size:10px; padding:5px 7px; }
+  .mobile.land #slipbox { top:40px; }
+  .settle { width:100%; border-collapse:collapse; font-size:12px; margin:8px 0; }
+  .settle td { padding:3px 6px; border-bottom:1px solid rgba(255,255,255,.08); text-align:left; }
+  .settle td.n { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .settle tr.hit td:first-child { color:#7dff8a; } .settle tr.bust td:first-child { color:#ff8a7e; }
   .mobile #right { padding-bottom:0; }
   .mobile #right { display:flex; flex-direction:column; padding:0; overflow:hidden; }
   .mobile #right .body { overflow:auto; padding:10px; min-height:0; }
@@ -261,6 +301,7 @@
 <div id="gameover" class="panel" hidden></div>
 <div id="lb" class="panel" hidden></div>
 <div id="dicebox" class="panel" hidden></div>
+<div id="slipbox" class="panel" hidden></div>
 <div id="merchant" class="panel" hidden></div>
 <div id="hcard" class="panel" hidden></div>
 <div id="inv" hidden></div>
@@ -315,6 +356,35 @@ function resize() {
   if (typeof phase !== 'undefined' && phase === 'prep') { placeFormations(); renderUI(); }
 }
 window.addEventListener('resize', resize);
+
+// ---------- camera ----------
+// The world is the full window (units live in screen-sized coordinates); the camera maps world point
+// (x, y) onto screen pivot (px, py) at zoom z. Identity in battle; on a phone the Army and Shop tabs
+// frame your own units so they can be inspected and dragged around.
+const cam = { x: 0, y: 0, z: 1, px: 0, py: 0, tx: 0, ty: 0, tz: 1, tpx: 0, tpy: 0 };
+function camIdentity() { return { x: W / 2, y: H / 2, z: 1, px: W / 2, py: H / 2 }; }
+function camZoomTab() { return phase === 'prep' && MOBILE && (tab === 'army' || tab === 'shop'); }
+function camTarget() {
+  const id = camIdentity();
+  if (!camZoomTab() || unitDrag) return unitDrag ? { x: cam.x, y: cam.y, z: cam.z, px: cam.px, py: cam.py } : id;
+  const list = units.filter(u => u.team.id === 0 && !u.dead); if (!list.length) return id;
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+  for (const u of list) { const w = unitW(u), h = unitH(u); x0 = Math.min(x0, u.x - w / 2); x1 = Math.max(x1, u.x + w / 2); y0 = Math.min(y0, u.y - h - 16); y1 = Math.max(y1, u.y + 8); }
+  const top = PORTRAIT ? 96 : 40, bottom = H - 46 - H * 0.30 - 8, padX = 36, padY = 14;
+  const z = clamp(Math.min(W / (x1 - x0 + padX * 2), (bottom - top) / (y1 - y0 + padY * 2)), 1, 2.2);
+  const px = W / 2, py = (top + bottom) / 2;
+  return { x: clamp((x0 + x1) / 2, px / z, W - (W - px) / z), y: clamp((y0 + y1) / 2, py / z, H - (H - py) / z), z, px, py };
+}
+function camSnap() { const t = camIdentity(); Object.assign(cam, { x: t.x, y: t.y, z: t.z, px: t.px, py: t.py, tx: t.x, ty: t.y, tz: t.z, tpx: t.px, tpy: t.py }); }
+function camStep(dt) {
+  const t = camTarget(); cam.tx = t.x; cam.ty = t.y; cam.tz = t.z; cam.tpx = t.px; cam.tpy = t.py;
+  const k = 1 - Math.pow(0.002, dt);
+  cam.x = lerp(cam.x, t.x, k); cam.y = lerp(cam.y, t.y, k); cam.z = lerp(cam.z, t.z, k); cam.px = lerp(cam.px, t.px, k); cam.py = lerp(cam.py, t.py, k);
+  if (Math.abs(cam.z - t.z) < 0.002 && Math.abs(cam.x - t.x) < 0.3 && Math.abs(cam.y - t.y) < 0.3) { cam.x = t.x; cam.y = t.y; cam.z = t.z; cam.px = t.px; cam.py = t.py; }
+}
+function camZ() { return cam.z * (1 + zoomPunch * 0.035); }
+function worldToScreen(x, y) { const z = camZ(); return { x: (x - cam.x) * z + cam.px, y: (y - cam.y) * z + cam.py }; }
+function screenToWorld(x, y) { const z = camZ(); return { x: (x - cam.px) / z + cam.x, y: (y - cam.py) / z + cam.y }; }
 
 // ---------- palette & teams ----------
 const PAL = {
@@ -511,10 +581,21 @@ const roster = []; // player's persistent units
 let enemyUnits = [];
 let time = 0, realTime = 0, hitstop = 0, slowmo = 0, trauma = 0, zoomPunch = 0, flash = 0, flashColor = '#fff';
 let shakeX = 0, shakeY = 0, shakeRot = 0;
-let phase = 'boot', round = 1, gold = 300, battleTime = 0, endTimer = 0, winner = null, peakGold = 300, totalWon = 0, tab = 'bet', codexOpen = false, allInForced = false;
-const MIN_BET = 10, START_GOLD = 300, PAYOUT_BOOST = 1.6;
-let goldShow = 300, goldBump = 0, betStreak = 0, coinFlyers = 0, betsRight = 0, betsWrong = 0;
-function streakMult() { return Math.min(3, 1 + 0.5 * betStreak); }
+let phase = 'boot', round = 1, gold = 300, battleTime = 0, endTimer = 0, winner = null, peakGold = 300, totalWon = 0, tab = 'bet', codexOpen = false;
+const MIN_BET = 10, START_GOLD = 300;
+let goldShow = 300, goldBump = 0, hotStreak = 0, coinFlyers = 0, ticketsWon = 0, ticketsLost = 0;
+// HOT HAND: consecutive rounds with net ticket profit multiply the next round's profits
+function hotHand() { return Math.min(2, 1 + 0.25 * hotStreak); }
+// ---------- battle log: one record of what happened, shared by the pricing sims and the live slip ----------
+let battleLog = null;
+function newLog() { return { t: 0, won: false, done: false, sudden: false, deaths: [], kills: {}, ults: {}, dmg: {}, healed: [0, 0], teamUlts: [0, 0], maxStreak: [0, 0], outnumbered: false, survivors: [[], []], firstUlt: null, firstUltT: null,
+  // the finer grain the wider board reads from: per-team totals and per-unit extremes
+  taken: {}, minHp: {}, healBy: {}, critsBy: {}, crits: [0, 0], hits: [0, 0], teamDmg: [0, 0], maxHit: 0, maxHitBy: null, shots: [0, 0], frozen: [0, 0], burned: [0, 0], absorbed: [0, 0], dashes: [0, 0], revives: [0, 0] }; }
+function finalizeLog() {
+  if (!battleLog || battleLog.done) return;
+  battleLog.done = true; battleLog.t = battleTime; battleLog.won = winner === TEAMS[0];
+  battleLog.survivors = TEAMS.map(t => alive(t).map(u => ({ id: u.id, hp: u.hp / u.maxHp, temp: !!u.temp })));
+}
 function goldPilePos() { const rx = MOBILE ? W - 16 : W - 40; if (MOBILE && !PORTRAIT) return { x: rx - textWidth('$' + Math.round(goldShow), 2.6) - 16, y: 16 }; return { x: rx - textWidth('$' + Math.round(goldShow), Math.max(2, S * 0.8) * 1.6) - 22, y: 26 }; }
 function drawCoin(x, y, r, spin, alpha = 1) { ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y); ctx.scale(Math.abs(Math.cos(spin)) * 0.8 + 0.2, 1); ctx.fillStyle = '#1a1023'; ctx.beginPath(); ctx.arc(0, 0, r + 1.5, 0, TAU); ctx.fill(); ctx.fillStyle = '#ffd93b'; ctx.beginPath(); ctx.arc(0, 0, r, 0, TAU); ctx.fill(); ctx.fillStyle = '#fff6b0'; ctx.fillRect(-1.5, -r * 0.6, 3, r * 0.5); ctx.restore(); }
 function awardGold(amount, x, y, opts = {}) {
@@ -527,7 +608,19 @@ function awardGold(amount, x, y, opts = {}) {
   }
   if (!opts.quiet) texts.push({ x, y: y - 20, vx: 0, vy: -70, g: 0, text: '+$' + amount, color: '#ffd93b', color2: '#fff', scale: S * (big ? 2.4 : 1.6), t: 0, life: 1.6, crit: big, rot: 0, pop: 0 });
 }
-function loseGold(amount, x, y) {
+// a stake leaving the pile for somewhere on screen: coins arc from the gold pile to (tx, ty) and land with a clink
+function spendGold(amount, tx, ty, label) {
+  amount = Math.round(amount); if (amount <= 0 || SIM) return;
+  const n = clamp(Math.round(amount / 12) + 3, 3, 40), per = amount / n, src0 = goldPilePos();
+  for (let i = 0; i < n; i++) {
+    const delay = i * 0.04, spin = rand(0, TAU), cx = (src0.x + tx) / 2 + rand(-120, 120), cy = Math.min(src0.y, ty) - rand(60, 180);
+    coinFlyers++;
+    addEffect({ dur: delay + 0.7, ui: true, draw(e) { if (e.t < delay) return; const src = goldPilePos(), k = easeOutCubic((e.t - delay) / 0.7), q = 1 - k; drawCoin(q * q * src.x + 2 * q * k * cx + k * k * tx, q * q * src.y + 2 * q * k * cy + k * k * ty, S * 2, spin + e.t * 14); }, update(e) { if (!e.started && e.t >= delay) { e.started = true; goldShow -= per; goldBump = 0.6; } if (!e.fired && e.t >= e.dur - 0.01) { e.fired = true; coinFlyers--; sparks(tx, ty, 4, '#ffd93b', 120); if (i % 3 === 0) SFX.coin(); if (i === n - 1) { goldShow = gold; ring(tx, ty, 26, '#ffd93b', 0.4, 3); } } } });
+  }
+  texts.push({ x: tx, y: ty - 26, vx: 0, vy: -50, g: 0, text: label || '-$' + amount, color: '#ffd93b', color2: '#fff', scale: S * 1.3, t: 0, life: 1.5, crit: false, rot: 0, pop: 0 });
+}
+// opts.quiet: a stake going to the house, not a loss; coins leave the pile without the red flash and the sad chord
+function loseGold(amount, x, y, opts = {}) {
   amount = Math.round(amount); if (amount <= 0) return;
   const n = clamp(Math.round(amount / 12) + 3, 3, 40), per = amount / n;
   for (let i = 0; i < n; i++) {
@@ -535,19 +628,21 @@ function loseGold(amount, x, y) {
     coinFlyers++;
     addEffect({ dur: delay + 0.9, ui: true, draw(e) { if (e.t < delay) return; const k = (e.t - delay) / 0.9, src = goldPilePos(); const px = lerp(src.x, ex, easeOutCubic(k)), py = src.y + vy0 * k + 1400 * k * k; drawCoin(px, py, S * 2, spin + e.t * 16, k > 0.75 ? 1 - (k - 0.75) / 0.25 : 1); }, update(e) { if (!e.started && e.t >= delay) { e.started = true; goldShow -= per; goldBump = 0.6; } if (!e.fired && e.t >= e.dur - 0.01) { e.fired = true; coinFlyers--; if (i === n - 1) goldShow = gold; } } });
   }
+  if (opts.quiet) { texts.push({ x, y: y - 20, vx: 0, vy: -60, g: 0, text: (opts.label || '-$' + amount), color: '#ffd93b', color2: '#fff', scale: S * 1.4, t: 0, life: 1.4, crit: false, rot: 0, pop: 0 }); SFX.coin(); return; }
   texts.push({ x, y: y - 20, vx: 0, vy: -70, g: 0, text: '-$' + amount, color: '#ff5a3c', color2: '#fff', scale: S * 2, t: 0, life: 1.6, crit: true, rot: 0, pop: 0 });
   addFlash(0.15, '#ff2a4a'); SFX.lose();
 }
 const LEAGUES = [
-  { name: 'BACKYARD BRAWL', tier: 'WOOD', color: '#b08968', fee: 0, winsReq: 2, floor: 60, roster: 5, cards: 3, legend: 0, edge: 0.90, chips: [25, 50, 100, 250], skew: 0.55, evoChance: 0.1, theme: { sky: ['#1b1440', '#5b2d7e', '#e0674f', '#ffb36b'], grass: [54, 132, 56], hill: ['#3a2a6a', '#2c1f55'] }, perk: 'Where everyone starts. Knights, archers and mages only.' },
-  { name: 'VILLAGE CUP', tier: 'BRONZE', color: '#cd7f32', fee: 300, winsReq: 3, floor: 120, roster: 6, cards: 3, legend: 1, edge: 0.92, chips: [25, 50, 100, 250], skew: 0.52, evoChance: 0.2, theme: { sky: ['#1c2c5e', '#3f6fb0', '#f0a86a', '#ffe0a0'], grass: [62, 142, 52], hill: ['#2f4a7a', '#22365e'] }, perk: 'Unlocks HEALER. Roster 6. Better payouts.' },
-  { name: 'CITY ARENA', tier: 'SILVER', color: '#c0c0c0', fee: 700, winsReq: 3, floor: 220, roster: 7, cards: 4, legend: 2, edge: 0.94, chips: [50, 100, 250, 500], skew: 0.50, evoChance: 0.3, theme: { sky: ['#1a1d3a', '#46558a', '#9aa8d8', '#dfe6ff'], grass: [56, 124, 78], hill: ['#3a4470', '#2a3258'] }, perk: 'Unlocks ASSASSIN. Roster 7. 4 shop cards. $500 chips. Enemies start evolving.' },
-  { name: 'ROYAL TOURNAMENT', tier: 'GOLD', color: '#ffd700', fee: 1400, winsReq: 4, floor: 400, roster: 8, cards: 4, legend: 4, edge: 0.95, chips: [50, 100, 250, 500, 1000], skew: 0.47, evoChance: 0.4, theme: { sky: ['#3a0d3f', '#8c2a6e', '#ff7a3c', '#ffd27a'], grass: [88, 136, 48], hill: ['#5a1f4a', '#3d1236'] }, perk: 'Unlocks BOMBER. Roster 8. $1000 chips. More legendaries in the shop. Tougher matchups.' },
-  { name: 'THE COLOSSEUM', tier: 'DIAMOND', color: '#7fd6ff', fee: 2800, winsReq: 5, floor: 700, roster: 10, cards: 5, legend: 6, edge: 0.96, chips: [100, 250, 500, 1000, 2500], skew: 0.45, evoChance: 0.5, theme: { sky: ['#050818', '#0f1d4a', '#2a5fa8', '#7fd6ff'], grass: [48, 108, 92], hill: ['#132a5a', '#0c1c40'] }, perk: 'Unlocks GUARDIAN. Roster 10. 5 shop cards. $2500 chips. Night fights under the lights.' },
-  { name: "GODS' ARENA", tier: 'MYTHIC', color: '#c85cff', fee: 5000, winsReq: Infinity, floor: 1200, roster: 10, cards: 5, legend: 8, edge: 0.97, chips: [100, 250, 500, 1000, 2500], skew: 0.42, evoChance: 0.6, theme: { sky: ['#0a0014', '#3a0a5e', '#c85cff', '#ffb3ff'], grass: [78, 62, 118], hill: ['#2a0a4a', '#1a0630'] }, perk: 'The endless top league. Best payouts, wildest enemies, purple grass.' },
+  // floor = prize money for winning the battle. board/tickets/parlay/reroll/boost = the betting progression. target = phantom win rate the enemy is tuned to.
+  { name: 'BACKYARD BRAWL', tier: 'WOOD', color: '#b08968', fee: 0, winsReq: 2, floor: 60, roster: 5, cards: 3, legend: 0, edge: 0.90, chips: [25, 50, 100, 250], board: 6, tickets: 2, parlay: 0, reroll: false, boost: false, target: 0.80, skew: 0.55, evoChance: 0.1, theme: { sky: ['#1b1440', '#5b2d7e', '#e0674f', '#ffb36b'], grass: [54, 132, 56], hill: ['#3a2a6a', '#2c1f55'] }, perk: 'Where everyone starts. Knights, archers and mages only. 2 tickets per fight.' },
+  { name: 'VILLAGE CUP', tier: 'BRONZE', color: '#cd7f32', fee: 300, winsReq: 3, floor: 120, roster: 6, cards: 3, legend: 1, edge: 0.92, chips: [25, 50, 100, 250], board: 6, tickets: 3, parlay: 2, reroll: false, boost: false, target: 0.76, skew: 0.52, evoChance: 0.2, theme: { sky: ['#1c2c5e', '#3f6fb0', '#f0a86a', '#ffe0a0'], grass: [62, 142, 52], hill: ['#2f4a7a', '#22365e'] }, perk: 'Unlocks HEALER. Roster 6. 3 tickets. Griswold takes PARLAYS now.' },
+  { name: 'CITY ARENA', tier: 'SILVER', color: '#c0c0c0', fee: 700, winsReq: 3, floor: 220, roster: 7, cards: 4, legend: 2, edge: 0.94, chips: [50, 100, 250, 500], board: 7, tickets: 4, parlay: 3, reroll: false, boost: false, target: 0.72, skew: 0.50, evoChance: 0.3, theme: { sky: ['#1a1d3a', '#46558a', '#9aa8d8', '#dfe6ff'], grass: [56, 124, 78], hill: ['#3a4470', '#2a3258'] }, perk: 'Unlocks ASSASSIN. Roster 7. 4 shop cards. $500 chips. Bigger board, 4 tickets, 3-leg parlays.' },
+  { name: 'ROYAL TOURNAMENT', tier: 'GOLD', color: '#ffd700', fee: 1400, winsReq: 4, floor: 400, roster: 8, cards: 4, legend: 4, edge: 0.95, chips: [50, 100, 250, 500, 1000], board: 8, tickets: 4, parlay: 3, reroll: true, boost: false, target: 0.70, skew: 0.47, evoChance: 0.4, theme: { sky: ['#3a0d3f', '#8c2a6e', '#ff7a3c', '#ffd27a'], grass: [88, 136, 48], hill: ['#5a1f4a', '#3d1236'] }, perk: 'Unlocks BOMBER. Roster 8. $1000 chips. Ask Griswold for a new line ($25).' },
+  { name: 'THE COLOSSEUM', tier: 'DIAMOND', color: '#7fd6ff', fee: 2800, winsReq: 5, floor: 700, roster: 10, cards: 5, legend: 6, edge: 0.96, chips: [100, 250, 500, 1000, 2500], board: 8, tickets: 5, parlay: 4, reroll: true, boost: true, target: 0.67, skew: 0.45, evoChance: 0.5, theme: { sky: ['#050818', '#0f1d4a', '#2a5fa8', '#7fd6ff'], grass: [48, 108, 92], hill: ['#132a5a', '#0c1c40'] }, perk: 'Unlocks GUARDIAN. Roster 10. 5 tickets, 4-leg parlays, one BOOSTED prop every round.' },
+  { name: "GODS' ARENA", tier: 'MYTHIC', color: '#c85cff', fee: 5000, winsReq: Infinity, floor: 1200, roster: 10, cards: 5, legend: 8, edge: 0.97, chips: [100, 250, 500, 1000, 2500], board: 9, tickets: 5, parlay: 4, reroll: true, boost: true, target: 0.65, skew: 0.42, evoChance: 0.6, theme: { sky: ['#0a0014', '#3a0a5e', '#c85cff', '#ffb3ff'], grass: [78, 62, 118], hill: ['#2a0a4a', '#1a0630'] }, perk: 'The endless top league. Best edge, 9-prop board, wildest enemies, purple grass.' },
 ];
 let league = 0, leagueWins = 0, biggestWin = 0, lbOpen = false, lastRunId = null, cashoutArm = 0;
-let dice = [], diceT = 0, rolledMods = [], battleEvents = [], preEvents = [], sdStart = 35, betMul = 1, insurance = false, goldRush = false, goldRushTotal = 0;
+let dice = [], diceT = 0, rolledMods = [], battleEvents = [], preEvents = [], sdStart = 35, insurance = false, insuranceUsed = false, goldRush = false, goldRushTotal = 0;
 const DICE_PER_LEAGUE = [1, 2, 2, 3, 3, 3];
 // ---------- chests & consumables ----------
 let inventory = [], chests = [], chestPlan = [], useAim = null, aimPos = null, drag = null;
@@ -561,14 +656,12 @@ const CONSUMABLES = [
   { id: 'poison', name: 'POISON FLASK', icon: '☠️', r: 1, aim: true, desc: 'Aim: toxic cloud, enemies inside lose 6% HP per second for 5s.', use(pos) { throwFromBar(pos, '☠️', () => { const R = 95; addEffect({ dur: 5, draw(e) { const p = e.t / e.dur; ctx.globalAlpha = 0.35 * (1 - p * 0.5); ctx.fillStyle = '#7fff5a'; ctx.beginPath(); ctx.ellipse(pos.x, pos.y, R, R * 0.5, 0, 0, TAU); ctx.fill(); ctx.globalAlpha = 1; }, update(e, dt) { if (Math.random() < dt * 30) spawnParticle({ x: pos.x + rand(-R, R), y: pos.y + rand(-R / 2, R / 2), vx: rand(-10, 10), vy: -30, size: S * 2, color: pick(['#7fff5a', '#3fbf3a', '#b7ff9a']), life: 1, type: 'puff', g: -20, drag: 1 }); e.tick = (e.tick || 0) - dt; if (e.tick <= 0) { e.tick = 0.5; for (const o of enemiesNear(TEAMS[0], pos.x, pos.y, R)) dealDamage(NATURE, o, o.maxHp * 0.03, false, { color: '#7fff5a', kb: 0, chained: true, silent: true }); } } }); SFX.fire(); }); } },
   { id: 'frost', icon: '❄️', name: 'FROST BOMB', icon: '❄️', r: 1, desc: 'Freezes every enemy solid for 3s.', use() { forTeam(1, u => { u.stunT = Math.max(u.stunT, 3); u.slowT = Math.max(u.slowT, 5); sparks(u.x, u.y - unitH(u) / 2, 14, '#dff8ff', 160); dmgText(u.x, headY(u) - 8, 'FROZEN', '#a8f4ff', { scale: S * 0.9 }); }); addFlash(0.4, '#a8f4ff'); fxRain('#dff8ff', 80); addTrauma(0.4); SFX.freeze(); SFX.block(); } },
   { id: 'rod', name: 'LIGHTNING ROD', icon: '🌩️', r: 1, desc: 'Bolts strike the 3 strongest enemies for 35% HP.', use() { const es = alive(TEAMS[1]).sort((a, b) => b.hp - a.hp).slice(0, 3); es.forEach((o, i) => battleEvents.push({ t: battleTime + i * 0.25, fn: () => { if (!o.dead) boltStrike(o.x, o.y); } })); } },
-  { id: 'phoenix', name: 'PHOENIX FEATHER', icon: '🪶', r: 2, desc: 'Revives your most recently fallen unit at 60% HP.', use() { const g = TEAMS[0].graveyard; let rev = null; while (g.length && !rev) { const c = g.pop(); if (c.dead && !c.temp) rev = c; } if (!rev) { toast('NOBODY TO REVIVE'); inventory.push(CONSUMABLES.find(c => c.id === 'phoenix')); renderInv(); return; } rev.dead = false; rev.deathT = 0; rev.hp = rev.maxHp * 0.6; rev.hpShow = 0; rev.slowT = rev.burnT = rev.stunT = 0; rev.kb.x = rev.kb.y = 0; rev.x = clamp(rev.x, 24, W - 24); rev.landed = false; rev.spawnT = 0.6; rev.spawnDur = 0.6; if (!units.includes(rev)) units.push(rev); banner('PHOENIX', '#ff8a3c', { color2: '#fff6a8', scale: S * 2.6, sub: rev.def.name + ' RISES', subColor: '#ffd700', life: 1.8 }); fireParticles(rev.x, rev.y - 20, 60, 300); lightPillar(rev.x, rev.y, '#ff8a3c', 1, 24); addFlash(0.4, '#ff8a3c'); SFX.powerup(3); } },
+  { id: 'phoenix', name: 'PHOENIX FEATHER', icon: '🪶', r: 2, desc: 'Revives your most recently fallen unit at 60% HP.', use() { const g = TEAMS[0].graveyard; let rev = null; while (g.length && !rev) { const c = g.pop(); if (c.dead && !c.temp) rev = c; } if (!rev) { toast('NOBODY TO REVIVE'); inventory.push(CONSUMABLES.find(c => c.id === 'phoenix')); renderInv(); return; } if (battleLog) battleLog.revives[0]++; rev.dead = false; rev.deathT = 0; rev.hp = rev.maxHp * 0.6; rev.hpShow = 0; rev.slowT = rev.burnT = rev.stunT = 0; rev.kb.x = rev.kb.y = 0; rev.x = clamp(rev.x, 24, W - 24); rev.landed = false; rev.spawnT = 0.6; rev.spawnDur = 0.6; if (!units.includes(rev)) units.push(rev); banner('PHOENIX', '#ff8a3c', { color2: '#fff6a8', scale: S * 2.6, sub: rev.def.name + ' RISES', subColor: '#ffd700', life: 1.8 }); fireParticles(rev.x, rev.y - 20, 60, 300); lightPillar(rev.x, rev.y, '#ff8a3c', 1, 24); addFlash(0.4, '#ff8a3c'); SFX.powerup(3); } },
   { id: 'battery', name: 'ULT BATTERY', icon: '🔋', r: 2, desc: 'Every ultimate on your team is instantly ready.', use() { forTeam(0, u => { lightning(W / 2, -10, u.x, u.y - unitH(u) / 2, '#c85cff'); u.ult = 100; u.ultReady = true; sparks(u.x, u.y - unitH(u) / 2, 16, '#c85cff', 200); }); addFlash(0.3, '#c85cff'); addTrauma(0.4); SFX.zap(); SFX.ult(); } },
   { id: 'horn', name: 'WAR HORN', icon: '📯', r: 2, desc: 'A mercenary drops in to fight for you.', use() { BUFFS.find(b => b.id === 'merc').apply(0); banner('REINFORCEMENTS', '#8ec5ff', { color2: '#fff', scale: S * 2, life: 1.2 }); SFX.streak(3); } },
   { id: 'apple', name: 'GOLDEN APPLE', icon: '🍎', r: 3, desc: 'A random unit of yours becomes a GOLDEN GOD for this fight.', use() { const c = alive(TEAMS[0]).filter(u => !u.golden); if (!c.length) { toast('EVERYONE IS ALREADY GOLDEN'); return; } const u = pick(c); UPGRADES.find(x => x.id === 'golden').apply(u); u.popScale = 1.5; lightPillar(u.x, u.y, '#ffd700', 1.2, 24); confetti(u.x, u.y - 30, 60, 400); banner('GOLDEN GOD', '#ffd700', { color2: '#fff8c2', scale: S * 3, sub: u.def.name + ' ASCENDS', subColor: '#fff', shake: 1, life: 2 }); addFlash(0.5, '#ffd700'); addTrauma(0.6); SFX.powerup(3); } },
-  { id: 'bench', name: 'BENCH WARRANT', icon: '🚪', r: 0, dark: true, desc: 'SABOTAGE: your healthiest unit walks off the field for the rest of this battle.', use() { const c = alive(TEAMS[0]).filter(u => !u.temp).sort((a, b) => b.hp - a.hp)[0]; if (!c) return; smoke(c.x, c.y - 20, 14, '#6a6070'); dmgText(c.x, headY(c) - 10, 'WALKS OFF', '#ff9a8e', { scale: S, life: 1.2 }); c.dead = true; c.deathT = 0.8; c.hp = 0; c.deathDir = -1; TEAMS[0].graveyard.push(c); SFX.dash(); } },
-  { id: 'taint', name: 'TAINTED WATER', icon: '🥤', r: 0, dark: true, desc: 'SABOTAGE: your team -35% attack and -30% speed for 8s.', use() { timedTeam(0, 8, u => { u.atk *= 0.65; u.speed *= 0.7; }, u => { u.atk /= 0.65; u.speed /= 0.7; }, '#7a6a40'); addFlash(0.2, '#7a6a40'); SFX.lose(); } },
-  { id: 'mutiny', name: 'MUTINY', icon: '🗡️', r: 1, dark: true, desc: 'SABOTAGE: one of your units switches sides for this battle.', use() { const c = alive(TEAMS[0]).filter(u => !u.temp); if (!c.length) return; const u = pick(c); u.team = TEAMS[1]; u.face = -1; u.target = null; u.mutiny = true; u.kb.x = 0; lightning(u.x, u.y - 200, u.x, u.y - unitH(u) / 2, '#ff5a3c'); banner('MUTINY', '#ff5a3c', { color2: '#fff', scale: S * 2.4, sub: u.def.name + ' TURNS ON YOU', subColor: '#fff', life: 1.8 }); addFlash(0.3, '#ff2a4a'); addTrauma(0.6); SFX.lose(); SFX.zap(); } },
-  { id: 'flag', name: 'WHITE FLAG', icon: '🏳️', r: 2, dark: true, desc: 'SABOTAGE: your whole army surrenders on the spot. The battle is lost.', use() { for (const u of alive(TEAMS[0])) { u.dead = true; u.deathT = 0; u.hp = 0; u.deathDir = -1; smoke(u.x, u.y - 20, 6, '#ddd'); TEAMS[0].graveyard.push(u); } banner('SURRENDER', '#fff', { color2: '#ddd', scale: S * 2.8, life: 1.8, sub: 'YOUR ARMY LAYS DOWN ITS ARMS', subColor: '#fff' }); addFlash(0.4, '#fff'); SFX.lose(); } },
+  { id: 'smoke', name: 'SMOKE BOMB', icon: '💨', r: 0, desc: 'Every enemy loses its target and stands confused for 1.5s.', use() { forTeam(1, u => { u.stunT = Math.max(u.stunT, 1.5); u.target = null; smoke(u.x, u.y - unitH(u) / 2, 10, '#8a8090'); }); addFlash(0.15, '#aaa'); SFX.dash(); } },
+  { id: 'adrenaline', name: 'ADRENALINE SHOT', icon: '💉', r: 1, desc: 'Your most wounded unit is healed to full and its ultimate is ready.', use() { const c = alive(TEAMS[0]).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0]; if (!c) return; heal(c, c.maxHp, true, c); c.ult = 100; c.ultReady = true; c.popScale = 1.2; lightPillar(c.x, c.y, '#ff2a4a', 0.8, 14); sparks(c.x, c.y - unitH(c) / 2, 20, '#ffd700', 220); SFX.heal(); SFX.zap(); } },
   { id: 'hourglass', name: 'HOURGLASS', icon: '⏳', r: 3, desc: 'Time bends: enemies crawl at 30% speed for 6s while your team acts 40% faster.', use() { forTeam(1, u => { u.slowT = Math.max(u.slowT, 6); }); timedTeam(0, 6, u => { u.atkSpeed *= 1.4; u.speed *= 1.4; }, u => { u.atkSpeed /= 1.4; u.speed /= 1.4; }, '#c85cff'); addFlash(0.4, '#c85cff'); slowmo = Math.max(slowmo, 0.6); addEffect({ dur: 6, draw(e) { const p = e.t / e.dur; ctx.globalAlpha = 0.18 * (1 - p); ctx.fillStyle = '#c85cff'; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; } }); SFX.ult(); } },
 ];
 function timedTeam(t, dur, on, off, color) { const affected = alive(TEAMS[t]); for (const u of affected) { on(u); u.auraT = Math.max(u.auraT || 0, dur); u.auraColor = color; u.popScale = 0.8; } battleEvents.push({ t: battleTime + dur, fn: () => { for (const u of affected) if (!u.dead) off(u); } }); }
@@ -582,9 +675,8 @@ function rollChestRarity() { const ws = rarityWeights(); const tot = ws.reduce((
 function planChests() { chests = []; chestPlan = []; const n = 2 + Math.floor(league / 2) + perkLv('lucky'); let t = 2; for (let i = 0; i < n; i++) { chestPlan.push(t); t += rand(5.5, 7.5); } }
 function spawnChest() {
   const r = rollChestRarity();
-  const darkOk = bet.side === 'lose' && Math.random() < 0.35;
-  const pool = CONSUMABLES.filter(c => c.r === r && (darkOk ? c.dark : !c.dark));
-  chests.push({ x: rand(W * 0.2, W * 0.8), y: rand(FIELD_TOP + 10, FIELD_BOTTOM - 10), z: H, vz: 0, state: 'falling', t: 0, r, item: pick(pool.length ? pool : CONSUMABLES.filter(c => c.r === r)), wob: 0 });
+  const pool = CONSUMABLES.filter(c => c.r === r);
+  chests.push({ x: rand(W * 0.2, W * 0.8), y: rand(FIELD_TOP + 10, FIELD_BOTTOM - 10), z: H, vz: 0, state: 'falling', t: 0, r, item: pick(pool.length ? pool : CONSUMABLES), wob: 0 });
   banner('CHEST INCOMING', RARITY[r].color, { color2: '#fff', scale: S * 1.6, life: 1.0, y: H * 0.18 }); SFX.arrow();
 }
 function openChest(c, byTap) {
@@ -644,7 +736,7 @@ function useSlot(i, pos) {
 }
 function renderInv(flashLast = false) {
   const el = UI.inv; el.hidden = !(phase === 'battle' || phase === 'prep' || phase === 'dice' || phase === 'ending' || phase === 'vs') || (MOBILE && (phase === 'dice' || phase === 'vs'));
-  el.innerHTML = Array.from({ length: invMax() }, (_, i) => { const it = inventory[i]; if (!it) return `<div class="slot empty">${i + 1}</div>`; const r = RARITY[it.r]; return `<div class="slot ${useAim && useAim.i === i ? 'aim' : ''} ${flashLast && i === inventory.length - 1 ? 'flash' : ''}" data-i="${i}" data-tip="<b>${esc(it.name)}</b> · ${r.name}<br>${esc(it.desc)}${it.aim ? '<br><i>aimed: tap the field after selecting</i>' : ''}${phase === 'battle' ? '' : '<br><i>usable during battle</i>'}" style="border-color:${r.color}"><span class="key">${i + 1}</span>${it.icon}<span class="rar" style="background:${it.dark ? '#ff5a3c' : r.color}">${it.dark ? 'SABOTAGE' : r.name}</span></div>`; }).join('');
+  el.innerHTML = Array.from({ length: invMax() }, (_, i) => { const it = inventory[i]; if (!it) return `<div class="slot empty">${i + 1}</div>`; const r = RARITY[it.r]; return `<div class="slot ${useAim && useAim.i === i ? 'aim' : ''} ${flashLast && i === inventory.length - 1 ? 'flash' : ''}" data-i="${i}" data-tip="<b>${esc(it.name)}</b> · ${r.name}<br>${esc(it.desc)}${it.aim ? '<br><i>aimed: tap the field after selecting</i>' : ''}${phase === 'battle' ? '' : '<br><i>usable during battle</i>'}" style="border-color:${r.color}"><span class="key">${i + 1}</span>${it.icon}<span class="rar" style="background:${r.color}">${r.name}</span></div>`; }).join('');
   el.querySelectorAll('.slot[data-i]').forEach(sl => sl.addEventListener('pointerdown', ev => { ev.stopPropagation(); ev.preventDefault(); const i = +sl.dataset.i; if (!inventory[i]) return; if (phase !== 'battle') { toast('USE IT DURING A BATTLE'); return; } drag = { i, item: inventory[i], x0: ev.clientX, y0: ev.clientY, x: ev.clientX, y: ev.clientY, moved: false, el: sl }; sl.classList.add('dragging'); useAim = null; hideTip(); }));
 }
 const NATURE = { team: { id: -1, name: 'THE FIELD', P: '#ffd93b', S: '#fff', p: '#aa8', glow: 'rgba(255,255,255,', streak: 0, lastKill: -99, graveyard: [], wins: 0, scoreBump: 0 }, stats: { dmg: 0, taken: 0, healed: 0, kills: 0, ults: 0 }, kills: 0, x: 0, y: 0, atk: 0, lifesteal: 0, chain: 0, frost: false, flame: false, golden: false, type: 'nature', def: { kind: 'nature', name: 'THE FIELD' }, dead: false, ult: 0, ultReady: true, sizeMul: 1, maxHp: 1, hp: 1, team0: null };
@@ -662,7 +754,7 @@ const BUFFS = [
   { id: 'reach', name: 'LONG REACH', desc: 'ranged & mid units +20% range', apply: t => forTeam(t, u => { if (u.def.kind !== 'melee') u.range *= 1.2; }) },
   { id: 'thorn', name: 'THORN ARMOR', desc: 'reflect 20% of damage taken', apply: t => forTeam(t, u => { u.thorns += 0.2; }) },
   { id: 'vamp', icon: '🧛', name: 'VAMPIRE NIGHT', desc: 'heal 20% of damage dealt', apply: t => forTeam(t, u => { u.lifesteal += 0.2; }) },
-  { id: 'insure', name: 'INSURANCE', desc: 'if this side is YOU: a lost bet refunds half', youOnly: true, apply: t => { if (t === 0) insurance = true; else forTeam(1, u => { u.atk *= 1.15; }); } },
+  { id: 'insure', name: 'INSURANCE', desc: 'if this side is YOU: your first busted ticket refunds its stake', youOnly: true, apply: t => { if (t === 0) insurance = true; else forTeam(1, u => { u.atk *= 1.15; }); } },
 ];
 const CHAOS = [
   { id: 'storm', name: 'LIGHTNING STORM', desc: '5 bolts strike the field before the fight. Anyone standing there gets hit.', apply: () => { for (let i = 0; i < 5; i++) preEvents.push({ t: 0.3 + i * 0.35, fn: () => boltStrike(rand(60, W - 60), rand(FIELD_TOP, FIELD_BOTTOM)) }); } },
@@ -676,7 +768,7 @@ const CHAOS = [
   { id: 'golden', icon: '👑', name: 'GOLDEN TOUCH', desc: 'one random unit on the field becomes a GOLDEN GOD', apply: () => { const c = units.filter(u => !u.dead && !u.golden); if (c.length) { const u = pick(c); UPGRADES.find(x => x.id === 'golden').apply(u); preEvents.push({ t: 0.2, fn: () => { lightPillar(u.x, u.y, '#ffd700', 1, 20); confetti(u.x, u.y - 30, 40, 300); dmgText(u.x, headY(u) - 10, 'GOLDEN!', '#ffd700', { scale: S * 1.4, color2: '#fff', life: 1.5 }); SFX.powerup(3); } }); } } },
   { id: 'quick', name: 'QUICK DEATH', desc: 'sudden death begins at 15s', apply: () => { sdStart = 15; } },
   { id: 'rush', name: 'GOLD RUSH', desc: 'you earn $4 for every enemy your team kills', apply: () => { goldRush = true; } },
-  { id: 'double', name: 'DOUBLE OR NOTHING', desc: 'your bet is doubled: win twice as much, lose twice as much', apply: () => { betMul = 2; bet.wager = Math.min(bet.wager, Math.floor(gold / 2)); } },
+  { id: 'double', name: 'DOUBLE OR NOTHING', desc: 'every stake on your slip is doubled, as far as your gold allows', apply: () => { for (const tk of slip) { const add = Math.min(tk.stake, Math.max(0, gold)); if (add <= 0) continue; tk.stake += add; gold -= add; } if (!SIM) renderSlipBox(); } },
 ];
 function forTeam(t, fn) { for (const u of units) if (u.team.id === t && !u.dead) fn(u); }
 function forAll(fn) { for (const u of units) if (!u.dead) fn(u); }
@@ -696,14 +788,15 @@ function natureMeteor(tx, ty) {
 }
 function diceCount() { return DICE_PER_LEAGUE[league] || 3; }
 function startDice() {
-  phase = 'dice'; diceT = 0; diceIdle = 0; rolledMods = []; dice = []; preEvents = []; battleEvents = []; sdStart = 35; betMul = 1; insurance = false; goldRush = false; goldRushTotal = 0;
+  phase = 'dice'; diceT = 0; diceIdle = 0; rolledMods = []; dice = []; preEvents = []; battleEvents = []; sdStart = 35; insurance = false; insuranceUsed = false; goldRush = false; goldRushTotal = 0;
+  battleLog = newLog(); battleTime = 0; for (const tk of slip) { tk.status = 'live'; tk.paid = 0; for (const lg of tk.legs) lg.status = 'live'; }
   for (const u of units) { resetUnitForBattle(u); u.snap = { atk: u.atk, maxHp: u.maxHp, speed: u.speed, atkSpeed: u.atkSpeed, range: u.range, crit: u.crit, shieldMax: u.shieldMax, sizeMul: u.sizeMul, regen: u.regen, golden: u.golden, thorns: u.thorns, lifesteal: u.lifesteal }; u.secondWind = false; }
   jitterFormation(units);
   if (perkLv('drill')) forTeam(0, u => { u.atk *= 1 + 0.06 * perkLv('drill'); u.maxHp *= 1 + 0.06 * perkLv('drill'); u.hp = u.maxHp; });
   if (perkLv('medic')) forTeam(0, u => { u.shield += u.maxHp * 0.15 * perkLv('medic'); u.shieldMax = Math.max(u.shieldMax, u.shield); });
   if (perkLv('adrenal')) forTeam(0, u => { if (!u.ultReady) chargeUlt(u, 25 * perkLv('adrenal')); });
   if (perkLv('merc')) { BUFFS.find(b => b.id === 'merc').apply(0); }
-  if (perkLv('warchest') && inventory.length < invMax()) { inventory.push(pick(CONSUMABLES.filter(c => c.r === 0 && !c.dark))); renderInv(true); }
+  if (perkLv('warchest') && inventory.length < invMax()) { inventory.push(pick(CONSUMABLES.filter(c => c.r === 0))); renderInv(true); }
   if (perkLv('storm')) for (let i = 0; i < perkLv('storm'); i++) battleEvents.push({ t: 0.8 + i * 0.6, fn: () => { const es = alive(TEAMS[1]); if (es.length) { const o = pick(es); boltStrike(o.x, o.y); dmgText(o.x, headY(o) - 30, 'STORM CALLER', '#a4b8ff', { scale: S, color2: '#fff' }); } } });
   loadedUsed = false;
   const n = diceCount(), size = Math.min(84, W / 6);
@@ -801,7 +894,7 @@ function drawVs() {
     const k = clamp((t - 1.0) / 0.3, 0, 1), y = cy + bandH / 2 + 30, pct = Math.round(odds.p * 100);
     ctx.globalAlpha = alpha * k; ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(0, y - 14, W, MOBILE ? 46 : 60); ctx.globalAlpha = 1;
     drawText(pct + '% YOU  -  ' + (100 - pct) + '% THEM', W / 2, y, Math.max(2, S * 0.9), '#fff', { alpha: alpha * k, color2: '#ffd93b' });
-    drawText('BET: I ' + bet.side.toUpperCase() + ' FOR $' + bet.wager + '  PAYS +$' + (bet.side === 'win' ? Math.max(L().floor, Math.round(bet.wager * (odds.win - 1) * PAYOUT_BOOST * streakMult())) : Math.round(bet.wager * (odds.lose - 1) * PAYOUT_BOOST * streakMult())), W / 2, y + (MOBILE ? 16 : 22), Math.max(2, S * 0.75), '#ffd93b', { alpha: alpha * k });
+    drawText('SLIP: ' + slip.length + (slip.length === 1 ? ' TICKET' : ' TICKETS') + ' · $' + slipStaked() + ' STAKED · TO WIN +$' + slipToWin(), W / 2, y + (MOBILE ? 16 : 22), Math.max(2, S * 0.75), '#ffd93b', { alpha: alpha * k });
     if (rolledMods.length && !MOBILE) drawText('MODS: ' + rolledMods.map(m => m.def.name).join('  /  '), W / 2, y + 40, Math.max(1.5, S * 0.6), '#fff', { alpha: alpha * k * 0.8 });
   }
   if (t > 1.4) drawText('TAP TO SKIP', W / 2, H - (MOBILE ? 70 : 40), Math.max(1.5, S * 0.55), '#fff', { alpha: alpha * 0.5 });
@@ -828,7 +921,7 @@ function drawDice() {
     ctx.restore();
     if (m) drawText(m.cat === 'good' ? 'GOOD' : m.cat === 'bad' ? 'BAD' : 'CHAOS', d.x, d.y + size * 0.85, Math.max(2, S * 0.9) * pop, m.color, { color2: '#fff' });
   }
-  drawText(bet.side ? 'BET LOCKED: I ' + bet.side.toUpperCase() + ' FOR $' + bet.wager : '', W / 2, H * 0.3 - Math.min(84, W / 6) * 1.05, Math.max(1.5, S * 0.6), '#ffd93b', { alpha: 0.9 });
+  drawText('SLIP LOCKED: ' + slip.length + (slip.length === 1 ? ' TICKET' : ' TICKETS') + ' · $' + slipStaked(), W / 2, H * 0.3 - Math.min(84, W / 6) * 1.05, Math.max(1.5, S * 0.6), '#ffd93b', { alpha: 0.9 });
 }
 function renderDiceBox() {
   const n = dice.length, done = rolledMods.length === n && n > 0 && preEvents.length === 0;
@@ -848,14 +941,14 @@ function lbSave(list) { try { localStorage.setItem(LB_KEY, JSON.stringify(list.s
 function playerName() { try { return (localStorage.getItem(NAME_KEY) || 'YOU').toUpperCase().slice(0, 10); } catch (e) { return 'YOU'; } }
 function setPlayerName(n) { n = (n || 'YOU').toUpperCase().replace(/[^A-Z0-9 _-]/g, '').slice(0, 10) || 'YOU'; try { localStorage.setItem(NAME_KEY, n); } catch (e) {} const list = lbLoad(); const e = list.find(x => x.id === lastRunId); if (e) { e.name = n; lbSave(list); } return n; }
 function recordRun(reason) {
-  const e = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: playerName(), date: new Date().toISOString().slice(0, 10), league, leagueName: LEAGUES[league].name, rounds: round, peak: peakGold, won: totalWon, biggest: biggestWin, wins: betsRight, losses: betsWrong, gold: Math.max(0, gold), reason, army: roster.map(u => u.def.name + (u.level > 1 ? ' LV' + u.level : '')).join(', ') };
+  const e = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: playerName(), date: new Date().toISOString().slice(0, 10), league, leagueName: LEAGUES[league].name, rounds: round, peak: peakGold, won: totalWon, biggest: biggestWin, wins: ticketsWon, losses: ticketsLost, gold: Math.max(0, gold), reason, army: roster.map(u => u.def.name + (u.level > 1 ? ' LV' + u.level : '')).join(', ') };
   const list = lbLoad(); list.push(e); lbSave(list); lastRunId = e.id;
 }
 function cashOut() {
   if (phase !== 'prep') return;
   if (cashoutArm <= 0) { cashoutArm = 3; toast('TAP AGAIN TO CASH OUT AND END THIS RUN'); renderUI(); setTimeout(() => { cashoutArm = 0; if (phase === 'prep') renderUI(); }, 3000); return; }
   cashoutArm = 0; recordRun('cashout');
-  lastResult = { won: false, correct: false, payout: 0, income: 0, mult: 1, busted: true, cashout: true }; phase = 'result';
+  lastResult = { won: false, over: true, cashout: true, tickets: [], purse: 0, net: 0 }; phase = 'result';
   banner('CASHED OUT', '#ffd93b', { color2: '#fff', scale: S * 3, life: 2.4, sub: '$' + gold + ' BANKED · RUN RECORDED', subColor: '#6aff7a' }); confetti(W / 2, H * 0.3, 120, 500); SFX.win();
   renderUI();
 }
@@ -891,7 +984,11 @@ function promotionCeremony(next, then) {
   }, 380);
   if (fired && iv !== null) clearInterval(iv);
 }
-let bet = { side: null, wager: 0 }, odds = { p: 0.5, win: 2, lose: 2 };
+let odds = { p: 0.5, pb: 0, pr: 0, ready: false };
+// the slip: tickets the player holds this round. a ticket has one leg (single) or several (parlay)
+let slip = [], board = [], boardCands = [], chip = 25;
+const slipStaked = () => slip.reduce((a, t) => a + t.stake, 0);
+const slipToWin = () => slip.reduce((a, t) => a + ticketProfit(t), 0);
 let selected = null, targeting = null, shopCards = [], enemyName = '', speed = 1, statsOpen = false;
 const MAX_ROSTER_ABS = 10;
 const clouds = [];
@@ -1006,6 +1103,7 @@ function heal(u, amt, show = true, src = null) {
   const before = u.hp; u.hp = Math.min(u.maxHp, u.hp + amt);
   const got = u.hp - before;
   if (src) src.stats.healed += got;
+  if (battleLog && src && src.team && src.team.id >= 0) { battleLog.healed[src.team.id] += got; if (src.id) battleLog.healBy[src.id] = (battleLog.healBy[src.id] || 0) + got; }
   if (got >= 1 && show) { dmgText(u.x + rand(-6, 6), headY(u), '+' + fmtNum(got), '#6aff7a', { vy: 90, scale: S * 0.9 }); sparks(u.x, u.y - unitH(u) / 2, 4, '#6aff7a', 80); }
   return got;
 }
@@ -1015,6 +1113,7 @@ function dealDamage(src, tgt, dmg, crit, opts = {}) {
   const hx = tgt.x, hy = tgt.y - unitH(tgt) * 0.55;
   if (tgt.shield > 0) {
     const absorbed = Math.min(tgt.shield, dmg); tgt.shield -= absorbed; dmg -= absorbed; src.stats.dmg += absorbed;
+    if (battleLog && tgt.team.id >= 0) battleLog.absorbed[tgt.team.id] += absorbed;
     dmgText(hx, headY(tgt), fmtNum(absorbed), '#7fd6ff', { scale: S * 0.9 });
     sparks(hx, hy, 8, '#7fd6ff'); ring(tgt.x, tgt.y - unitH(tgt) / 2, unitW(tgt), '#7fd6ff', 0.25, 3);
     if (!opts.silent) SFX.block();
@@ -1024,6 +1123,12 @@ function dealDamage(src, tgt, dmg, crit, opts = {}) {
   if (src.team && src.team.id >= 0 && !opts.chained && !opts.reflected) { const own = alive(src.team).length || 1, foe = alive(tgt.team).length || 1; dmg *= clamp(Math.pow(foe / own, 0.4), 0.8, 1.45); }
   tgt.hp -= dmg; tgt.flash = 0.1; tgt.squash = 1;
   src.stats.dmg += dmg; tgt.stats.taken += dmg;
+  if (battleLog) {
+    const l = battleLog, st = src.team ? src.team.id : -1;
+    if (src.id) { l.dmg[src.id] = (l.dmg[src.id] || 0) + dmg; if (crit) l.critsBy[src.id] = (l.critsBy[src.id] || 0) + 1; }
+    if (st >= 0) { l.teamDmg[st] += dmg; l.hits[st]++; if (crit) l.crits[st]++; if (dmg > l.maxHit) { l.maxHit = dmg; l.maxHitBy = src.id || null; } }
+    if (tgt.id) { l.taken[tgt.id] = (l.taken[tgt.id] || 0) + dmg; const f = Math.max(0, tgt.hp / tgt.maxHp); if (l.minHp[tgt.id] === undefined || f < l.minHp[tgt.id]) l.minHp[tgt.id] = f; }
+  }
   chargeUlt(tgt, 30 * dmg / tgt.maxHp);
   const kdir = Math.sign(tgt.x - src.x) || 1, kb = opts.kb === undefined ? (crit ? 220 : 110) : opts.kb;
   const mass = tgt.sizeMul * tgt.sizeMul;
@@ -1047,11 +1152,11 @@ function dealDamage(src, tgt, dmg, crit, opts = {}) {
     for (const o of near) { lightning(px, py, o.x, o.y - unitH(o) / 2, '#a4b8ff'); dealDamage(src, o, dmg * 0.55, false, { chained: true, reflected: true, color: '#a4b8ff', kb: 60, silent: true }); px = o.x; py = o.y - unitH(o) / 2; }
     if (near.length) SFX.zap();
   }
-  if (src.frost && !secondary) { tgt.slowT = 2.2; sparks(hx, hy, 6, '#a8f4ff', 120); if (Math.random() < 0.35) dmgText(hx, headY(tgt) - 14, 'FROZEN', '#a8f4ff', { scale: S * 0.8, vy: 120 }); SFX.freeze(); }
-  if (src.flame && !secondary) { tgt.burnT = 3; tgt.burnDmg = Math.max(tgt.burnDmg, src.atk * 0.25); tgt.burnSrc = src; fireParticles(hx, hy, 6); }
-  if (tgt.hp <= 0) kill(tgt, src);
+  if (src.frost && !secondary) { tgt.slowT = 2.2; if (battleLog && src.team && src.team.id >= 0) battleLog.frozen[src.team.id]++; sparks(hx, hy, 6, '#a8f4ff', 120); if (Math.random() < 0.35) dmgText(hx, headY(tgt) - 14, 'FROZEN', '#a8f4ff', { scale: S * 0.8, vy: 120 }); SFX.freeze(); }
+  if (src.flame && !secondary) { if (battleLog && src.team && src.team.id >= 0 && tgt.burnT <= 0) battleLog.burned[src.team.id]++; tgt.burnT = 3; tgt.burnDmg = Math.max(tgt.burnDmg, src.atk * 0.25); tgt.burnSrc = src; fireParticles(hx, hy, 6); }
+  if (tgt.hp <= 0) kill(tgt, src, crit);
 }
-function kill(u, killer) {
+function kill(u, killer, crit = false) {
   if (u.dead) return;
   if (u.secondWind) { u.secondWind = false; u.hp = u.maxHp * 0.3; u.hpShow = 0; u.flash = 0.3; u.popScale = 1; lightPillar(u.x, u.y, '#6aff7a', 0.8, 14); ring(u.x, u.y, 50, '#6aff7a', 0.5, 4); dmgText(u.x, headY(u) - 14, 'SECOND WIND', '#6aff7a', { scale: S * 1.1, color2: '#fff', life: 1.3 }); SFX.heal(); return; }
   if (perkLv('robber') && killer.team.id === 0 && !SIM && u.team.id === 1) { const g = 3 * perkLv('robber'); gold += g; peakGold = Math.max(peakGold, gold); awardGold(g, u.x, u.y - 30, { quiet: true }); }
@@ -1060,6 +1165,7 @@ function kill(u, killer) {
   u.deathDir = Math.sign(u.x - killer.x) || 1;
   u.team.graveyard.push(u);
   const team = killer.team, cx = u.x, cy = u.y - unitH(u) / 2;
+  if (battleLog) { battleLog.deaths.push({ id: u.id, team: u.team.id, killer: killer.id || 'field', killerTeam: team.id, t: battleTime, crit: !!crit, temp: !!u.temp }); if (killer.id) battleLog.kills[killer.id] = (battleLog.kills[killer.id] || 0) + 1; }
   burstPixels(cx, cy, [u.team.P, u.team.S, u.team.p, PAL.F, PAL.K], 34, 300, S);
   confetti(cx, cy, 26, 360); coins(cx, u.y, ri(3, 6)); smoke(cx, cy, 5);
   shockwave(u.x, u.y, 44 * u.sizeMul, u.team.S);
@@ -1069,6 +1175,7 @@ function kill(u, killer) {
   if (killer.def.sprite && killer.kills === 3) { dmgText(killer.x, headY(killer) - 10, 'VETERAN', '#ffd700', { scale: S, vy: 120, life: 1.2, color2: '#fff' }); killer.popScale = 1; }
   if (time - team.lastKill < 3.2) team.streak++; else team.streak = 1;
   team.lastKill = time;
+  if (battleLog && team.id >= 0) battleLog.maxStreak[team.id] = Math.max(battleLog.maxStreak[team.id], team.streak);
   if (team.streak >= 2) {
     const names = ['DOUBLE KILL', 'TRIPLE KILL', 'MEGA KILL', 'RAMPAGE', 'UNSTOPPABLE', 'GODLIKE'];
     const i = Math.min(team.streak - 2, names.length - 1);
@@ -1086,6 +1193,7 @@ function fireProjectile(u, tgt, kind, opts = {}) {
   const tx = opts.tx !== undefined ? opts.tx : tgt.x, ty = opts.ty !== undefined ? opts.ty : (tgt ? tgt.y - unitH(tgt) / 2 : u.y);
   const sx = opts.sx !== undefined ? opts.sx : h.x, sy = opts.sy !== undefined ? opts.sy : h.y - (kind === 'fireball' ? 14 : 0);
   const d = dist(sx, sy, tx, ty), spd = opts.speed || (kind === 'arrow' ? 520 : kind === 'bomb' ? 300 : 340);
+  if (battleLog && !opts.heal && u.team && u.team.id >= 0) battleLog.shots[u.team.id]++;
   projectiles.push({ kind, x: sx, y: sy, sx, sy, tgt, tx, ty, t: -(opts.delay || 0), dur: clamp(d / spd, 0.18, kind === 'bomb' ? 1.1 : 0.9), arc: opts.arc !== undefined ? opts.arc : clamp(d * (kind === 'bomb' ? 0.35 : kind === 'arrow' ? 0.18 : 0.25), 10, 90),
     src: u, dmg: dmgRoll.dmg * (opts.dmgMul || 1), crit: dmgRoll.crit, team: u.team, ang: 0, px: sx, py: sy, homing: opts.homing !== false && kind !== 'bomb', r: (crit => (crit ? 7 : 5) * (S / 3) * u.sizeMul)(dmgRoll.crit) * (opts.rMul || 1), aoe: (opts.aoe || 46) * u.aoe * (opts.rMul || 1), heal: !!opts.heal, healAmt: opts.healAmt || 0, rain: !!opts.rain, fuse: 0 });
 }
@@ -1159,12 +1267,14 @@ function assassinDash(u) {
   u.x = clamp(t.x + (u.team.id === 0 ? 1 : -1) * 22, 24, W - 24); u.y = clamp(t.y + rand(-8, 8), FIELD_TOP, FIELD_BOTTOM);
   addEffect({ dur: 0.3, draw(e) { const p = e.t / e.dur; ctx.globalAlpha = (1 - p) * 0.6; ctx.strokeStyle = u.team.S; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(ox, oy - 20); ctx.lineTo(u.x, u.y - 20); ctx.stroke(); ctx.globalAlpha = 1; } });
   smoke(u.x, u.y - unitH(u) / 2, 8, '#3a3a4a'); u.target = t; u.retarget = 1; u.dashCd = 5; u.popScale = 0.6; SFX.dash();
+  if (battleLog && u.team.id >= 0) battleLog.dashes[u.team.id]++;
   return true;
 }
 
 // ---------- ultimates ----------
 function castUlt(u) {
   u.ult = 0; u.ultReady = false; u.stats.ults++;
+  if (battleLog) { battleLog.ults[u.id] = (battleLog.ults[u.id] || 0) + 1; if (u.team.id >= 0) battleLog.teamUlts[u.team.id]++; if (!battleLog.firstUlt) { battleLog.firstUlt = u.id; battleLog.firstUltT = battleTime; } }
   const name = u.def.ultName, kind = u.def.ult;
   ultText(u, name); ring(u.x, u.y, 60, '#ffd700', 0.5, 5); lightPillar(u.x, u.y, '#ffd700', 0.5, 10); addTrauma(0.35); slowmo = Math.max(slowmo, 0.25); zoomPunch = Math.max(zoomPunch, 0.8); SFX.ult();
   const spin = (mul, r) => { u.spinT = 0.6; for (const o of enemiesNear(u.team, u.x, u.y, r * u.sizeMul)) { dealDamage(u, o, rollDamage(u).dmg * mul, Math.random() < u.crit + 0.2, { kb: 340 }); } for (let i = 0; i < 6; i++) slashArc(u.x + Math.cos(i) * 20, u.y - unitH(u) / 2 + Math.sin(i) * 10, i % 2 ? 1 : -1, '#fff', r * 0.6); shockwave(u.x, u.y, r * u.sizeMul, '#fff'); };
@@ -1184,7 +1294,7 @@ function castUlt(u) {
     case 'meteorstorm': if (t) { const es = enemiesNear(u.team, u.x, u.y, 2000).sort(() => Math.random() - 0.5); for (let i = 0; i < 3; i++) { const tt = es[i] || t; meteor(tt.x + rand(-30, 30), tt.y + rand(-20, 20), 0.8 + i * 0.35, 2.6, 85 * u.aoe); } } break;
     case 'sanctuary': for (const a of alliesNear(u.team, u.x, u.y, 3000, null)) { heal(a, a.maxHp * 0.35, true, u); a.shield += a.maxHp * 0.25; a.shieldMax = Math.max(a.shieldMax, a.shield); lightPillar(a.x, a.y, '#6aff7a', 0.8, 10); ring(a.x, a.y, 30, '#fff', 0.5, 3); } addFlash(0.2, '#6aff7a'); SFX.heal(); break;
     case 'resurrect': { const g = u.team.graveyard; let rev = null; while (g.length && !rev) { const c = g.pop(); if (c.dead) rev = c; }
-      if (rev) { rev.dead = false; rev.deathT = 0; rev.hp = rev.maxHp * 0.6; rev.hpShow = 0; rev.slowT = rev.burnT = rev.stunT = 0; rev.kb.x = rev.kb.y = 0; rev.x = clamp(u.x + rand(-40, 40), 24, W - 24); rev.y = clamp(u.y + rand(-30, 30), FIELD_TOP, FIELD_BOTTOM); rev.landed = false; rev.spawnT = 0.6; rev.spawnDur = 0.6; if (!units.includes(rev)) units.push(rev); banner('RESURRECTION', '#6aff7a', { color2: '#fff', scale: S * 2.4, sub: rev.def.name + ' RETURNS', subColor: '#ffd700', life: 1.8 }); addFlash(0.4, '#fff'); lightPillar(rev.x, rev.y, '#fff', 1.0, 24); confetti(rev.x, rev.y - 30, 40, 300); }
+      if (rev) { if (battleLog && u.team.id >= 0) battleLog.revives[u.team.id]++; rev.dead = false; rev.deathT = 0; rev.hp = rev.maxHp * 0.6; rev.hpShow = 0; rev.slowT = rev.burnT = rev.stunT = 0; rev.kb.x = rev.kb.y = 0; rev.x = clamp(u.x + rand(-40, 40), 24, W - 24); rev.y = clamp(u.y + rand(-30, 30), FIELD_TOP, FIELD_BOTTOM); rev.landed = false; rev.spawnT = 0.6; rev.spawnDur = 0.6; if (!units.includes(rev)) units.push(rev); banner('RESURRECTION', '#6aff7a', { color2: '#fff', scale: S * 2.4, sub: rev.def.name + ' RETURNS', subColor: '#ffd700', life: 1.8 }); addFlash(0.4, '#fff'); lightPillar(rev.x, rev.y, '#fff', 1.0, 24); confetti(rev.x, rev.y - 30, 40, 300); }
       for (const a of alliesNear(u.team, u.x, u.y, 3000, null)) { heal(a, a.maxHp * 0.3, true, u); lightPillar(a.x, a.y, '#6aff7a', 0.6, 8); } SFX.heal(); break; }
     case 'shadowstrike': case 'shadowdance': { const n = kind === 'shadowdance' ? 3 : 1; const es = units.filter(o => o.team !== u.team && !o.dead && o.landed).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp).slice(0, n);
       es.forEach((o, i) => addEffect({ dur: 0.25 + i * 0.22, update(e) { if (!e.fired && e.t >= e.dur - 0.01) { e.fired = true; if (u.dead || o.dead) return; smoke(u.x, u.y - unitH(u) / 2, 8, '#3a3a4a'); u.x = clamp(o.x - (o.face || 1) * 24, 24, W - 24); u.y = o.y; u.face = Math.sign(o.x - u.x) || 1; smoke(u.x, u.y - unitH(u) / 2, 8, '#3a3a4a'); slashArc(o.x, o.y - unitH(o) / 2, u.face, '#c85cff', 36); slashArc(o.x, o.y - unitH(o) / 2, -u.face, '#fff', 30); dealDamage(u, o, u.atk * 4, true, { kb: 380 }); u.target = o; u.retarget = 1; u.lunge = 12; SFX.dash(); } }, draw() {} })); break; }
@@ -1277,8 +1387,11 @@ const RELICS = [
   { id: 'medic', icon: '🛡️', name: 'FIELD MEDIC', desc: 'Your units start every battle with a 15% shield.', max: 3, price: 200 },
   { id: 'warchest', icon: '🧪', name: 'WAR CHEST', desc: 'A free common consumable in your bag every battle.', max: 1, price: 240 },
   { id: 'loaded', icon: '🎲', name: 'LOADED DICE', desc: 'The first die that lands on 1-2 is re-rolled once.', max: 1, price: 320 },
-  { id: 'insure', icon: '📜', name: 'INSURANCE POLICY', desc: 'Lost bets refund 15% of the stake.', max: 3, price: 260 },
-  { id: 'roller', icon: '💰', name: 'HIGH ROLLER', desc: 'Winning bets pay 12% more.', max: 3, price: 300 },
+  { id: 'insure', icon: '📜', name: 'INSURANCE POLICY', desc: 'Busted tickets refund 15% of the stake.', max: 3, price: 260 },
+  { id: 'roller', icon: '💰', name: 'HIGH ROLLER', desc: 'Winning tickets pay 12% more.', max: 3, price: 300 },
+  { id: 'slip', icon: '🎟️', name: 'SECOND SLIP', desc: '+1 ticket on your slip every fight.', max: 2, price: 300 },
+  { id: 'insider', icon: '🕵️', name: 'INSIDE MAN', desc: 'Griswold lets slip the true hit rate of one prop per round.', max: 1, price: 260 },
+  { id: 'parlayking', icon: '👑', name: 'PARLAY KING', desc: 'Parlays pay 20% more.', max: 2, price: 280 },
   { id: 'merc', icon: '🗡️', name: 'MERCENARY CONTRACT', desc: 'A hired blade joins your side every battle.', max: 1, price: 380 },
   { id: 'robber', icon: '💀', name: 'GRAVE ROBBER', desc: '+$3 gold for every enemy your team kills.', max: 2, price: 160 },
   { id: 'adrenal', icon: '⚡', name: 'ADRENAL GLANDS', desc: 'Your ultimates start 25% charged.', max: 2, price: 220 },
@@ -1328,7 +1441,7 @@ function renderMerchant() {
 function invMax() { return INV_MAX + perkLv('bag'); }
 const BOOKIE = { name: 'GRISWOLD', title: 'THE ODDSMAKER', line: '', lineT: 0, mood: 'think', reacted: false };
 const BOOKIE_THINK = ['Hmm. Let me have a look at you...', 'Knights, knights... and THAT thing.', "Don't move. I'm counting.", 'Running the numbers. Quiet, please.', "I've seen better. I've seen worse. Mostly worse.", 'Interesting choice of hats.', 'Carry the two... no, the three...'];
-function bookieVerdict(p) { return p >= 0.8 ? "Fancy army. I'm not paying much for that." : p >= 0.6 ? "You're the favorite. Don't get cocky." : p >= 0.4 ? 'A coin flip. My favorite kind of fight.' : p >= 0.2 ? 'Underdog. Big money if you pull it off.' : "You brought THAT? I'll pay a fortune if you win. You won't."; }
+function bookieVerdict(p) { return p >= 0.8 ? "Fancy army. You'll win. Tell me HOW. That's where the money is." : p >= 0.6 ? "You're the favorite. Don't get cocky. The board's up." : p >= 0.5 ? 'A coin flip. Lose it and you walk. Sure you want this fight?' : p >= 0.35 ? "I have you LOSING this. It's your funeral. Board's up anyway." : "You brought THAT? I wouldn't fight this. I'd go shopping."; }
 function bookieSay(line, mood = 'talk') { BOOKIE.line = line; BOOKIE.lineT = realTime; BOOKIE.mood = mood; const b = $('bookieline'); if (b) b.textContent = line; }
 // optional portrait PNGs dropped next to index.html (griswold.png / mirella.png); pixel sprites are the fallback
 const PORTRAITS = {};
@@ -1348,36 +1461,39 @@ function drawBookie() {
   // mouth: talking wiggle for a moment after a new line
   if (realTime - BOOKIE.lineT < 1.2 && Math.sin(realTime * 18) > 0) { g.fillStyle = '#1a1023'; g.fillRect(6 * sc, 10 * sc + bob, 4 * sc, 3); }
 }
-const SIM_RUNS = 40;
+const SIM_RUNS = 60; // more runs = steadier prices on the long shots; each sim is a couple of ms
 function cloneUnit(u) { return { ...u, kb: { x: 0, y: 0 }, stats: { dmg: 0, taken: 0, healed: 0, kills: 0, ults: 0 }, target: null, healTarget: null, upgrades: u.upgrades.slice() }; }
 function simulateOnce(customRoster) {
-  const saved = { units: units.slice(), projectiles: projectiles.slice(), effects: effects.slice(), phase, time, battleTime, winner, suddenDeath, sdTick, slowmo, hitstop, trauma, zoomPunch, flash, endTimer,
+  const saved = { units: units.slice(), projectiles: projectiles.slice(), effects: effects.slice(), phase, time, battleTime, winner, suddenDeath, sdTick, slowmo, hitstop, trauma, zoomPunch, flash, endTimer, log: battleLog,
     teams: TEAMS.map(t => ({ graveyard: t.graveyard, streak: t.streak, lastKill: t.lastKill })) };
   SIM = true;
   units.length = 0; projectiles.length = 0; effects.length = 0;
   for (const u of (customRoster || fielded()).concat(enemyUnits)) { const c = cloneUnit(u); resetUnitForBattle(c); units.push(c); }
   jitterFormation(units);
   for (const t of TEAMS) { t.graveyard = []; t.streak = 0; t.lastKill = -99; }
-  phase = 'battle'; battleTime = 0; suddenDeath = false; sdTick = 0; winner = null; slowmo = 0; hitstop = 0;
+  phase = 'battle'; battleTime = 0; suddenDeath = false; sdTick = 0; winner = null; slowmo = 0; hitstop = 0; battleLog = newLog();
   let steps = 0; while (phase === 'battle' && steps < 30 * 100) { update(1 / 30); steps++; }
-  const won = winner === TEAMS[0];
+  finalizeLog(); // a fight that never ended counts as a loss
+  const log = battleLog;
   units.length = 0; units.push(...saved.units); projectiles.length = 0; projectiles.push(...saved.projectiles); effects.length = 0; effects.push(...saved.effects);
-  phase = saved.phase; time = saved.time; battleTime = saved.battleTime; winner = saved.winner; suddenDeath = saved.suddenDeath; sdTick = saved.sdTick; slowmo = saved.slowmo; hitstop = saved.hitstop; trauma = saved.trauma; zoomPunch = saved.zoomPunch; flash = saved.flash; endTimer = saved.endTimer;
+  phase = saved.phase; time = saved.time; battleTime = saved.battleTime; winner = saved.winner; suddenDeath = saved.suddenDeath; sdTick = saved.sdTick; slowmo = saved.slowmo; hitstop = saved.hitstop; trauma = saved.trauma; zoomPunch = saved.zoomPunch; flash = saved.flash; endTimer = saved.endTimer; battleLog = saved.log;
   TEAMS.forEach((t, i) => { t.graveyard = saved.teams[i].graveyard; t.streak = saved.teams[i].streak; t.lastKill = saved.teams[i].lastKill; });
   SIM = false;
-  return won;
+  return log;
 }
-function scheduleOdds() { if (oddsLocked) return; sim = { done: 0, wins: 0, total: SIM_RUNS }; computeOdds(); }
+function scheduleOdds() { if (oddsLocked) return; sim = { done: 0, wins: 0, total: SIM_RUNS, logs: [] }; computeOdds(); }
 function rosterSig() { return fielded().map(u => u.id + ':' + u.type + ':' + u.level + ':' + Math.round(u.atk) + ':' + Math.round(u.maxHp)).sort().join('|') + '#' + enemyUnits.map(u => u.id).join(','); }
 let lockedSig = '', lockedOdds = null, priceMemory = {};
 function recallBookie() {
-  const sig = rosterSig();
-  if (priceMemory[sig]) { sim = null; oddsLocked = true; odds = { ...priceMemory[sig], ready: true }; lockedSig = sig; lockedOdds = { ...odds }; bookieSay('Same army, same price. I remember.', 'verdict'); renderUI(); return; }
-  oddsLocked = false; bookieSay('Changed your mind? Let me look again...', 'think'); scheduleOdds(); renderUI();
+  const sig = rosterSig(); slip = [];
+  if (priceMemory[sig]) { const m = priceMemory[sig]; sim = null; oddsLocked = true; odds = { ...m.odds, ready: true }; board = m.board; boardCands = m.cands; lockedSig = sig; lockedOdds = { ...odds }; bookieSay('Same army, same board. I remember.', 'verdict'); renderUI(); return; }
+  oddsLocked = false; board = []; boardCands = []; bookieSay('Changed your mind? Let me look again...', 'think'); scheduleOdds(); renderUI();
 }
 function lockOdds() {
-  oddsLocked = true; computeOdds(); lockedSig = rosterSig(); lockedOdds = { ...odds }; priceMemory[lockedSig] = { ...odds }; BOOKIE.reacted = false; bookieSay(bookieVerdict(odds.p), 'verdict');
-  banner('ODDS LOCKED!', '#ffd93b', { color2: '#fff', scale: S * 2.4, life: 2.6, y: H * 0.2, sub: BOOKIE.name + ': ' + Math.round(odds.p * 100) + '% TO WIN  ·  WIN X' + odds.win.toFixed(2) + '  ·  LOSE X' + odds.lose.toFixed(2), subColor: '#fff' });
+  oddsLocked = true; computeOdds(); lockedSig = rosterSig();
+  boardCands = priceProps(sim ? sim.logs : []); board = selectBoard(boardCands); slip = slip.filter(t => t.legs.every(l => board.includes(l)));
+  lockedOdds = { ...odds }; priceMemory[lockedSig] = { odds: { ...odds }, board, cands: boardCands }; BOOKIE.reacted = false; bookieSay(bookieVerdict(odds.p), 'verdict');
+  banner('BOARD POSTED', '#ffd93b', { color2: '#fff', scale: S * 2.4, life: 2.6, y: H * 0.2, sub: BOOKIE.name + ': ' + Math.round(odds.p * 100) + '% TO WIN  ·  ' + board.length + ' PROPS ON THE BOARD', subColor: '#fff' });
   addFlash(0.12, '#ffd93b'); SFX.block(); SFX.coin();
   renderUI();
 }
@@ -1387,7 +1503,7 @@ function stepSims(budgetMs = 10) {
   if (tune) { stepTune(budgetMs); if (typeof renderBet === 'function' && !UI.right.hidden) renderBet(); return; }
   if (!sim || sim.done >= sim.total) return;
   const start = performance.now();
-  do { if (simulateOnce()) sim.wins++; sim.done++; } while (sim.done < sim.total && performance.now() - start < budgetMs);
+  do { const l = simulateOnce(); if (l.won) sim.wins++; sim.logs.push(l); sim.done++; } while (sim.done < sim.total && performance.now() - start < budgetMs);
   computeOdds();
   if (sim.done >= sim.total && !oddsLocked) { lockOdds(); return; }
   if (typeof renderBet === 'function' && !UI.right.hidden) renderBet();
@@ -1398,9 +1514,285 @@ function computeOdds() {
   if (sim && sim.done > 0) p = clamp((sim.wins + 1) / (sim.done + 2), 0.04, 0.96); // smoothed Monte Carlo estimate
   if (typeof diceCount === 'function') p = 0.5 + (p - 0.5) * (1 - 0.1 * diceCount()); // dice blur the outcome, pull odds toward even
   else p = clamp(1 / (1 + Math.pow(pr / Math.max(1, pb), POWER_W.k)), 0.04, 0.96);
-  odds = { p, pb, pr, win: clamp(L().edge / p, 1.05, 15), lose: clamp(L().edge / (1 - p), 1.05, 15), ready: !tune && (!sim || sim.done >= sim.total) };
+  odds = { p, pb, pr, ready: !tune && (!sim || sim.done >= sim.total) };
 }
 function unlockedTypes() { return BASE_TYPES.filter(t => UNIT_TYPES[t].unlock <= league + 1); }
+
+// ---------- the prop board: what Griswold will take a bet on ----------
+// A prop has final(log) for pricing and settlement, an optional live(log) that can stamp it HIT or BUST
+// mid-fight, and show(log) for the tracker's running value. fam = one per board, excl = can't share a parlay.
+const PROP_CATS = { tempo: { name: 'TEMPO', full: 'TEMPO', color: '#8ec5ff' }, blood: { name: 'CASUAL.', full: 'CASUALTIES', color: '#ff8a7e' }, hero: { name: 'HERO', full: 'HERO', color: '#ffd93b' }, foe: { name: 'THEIRS', full: 'THEIR SIDE', color: '#f06aa8' }, first: { name: 'FIRST', full: 'FIRST BLOOD', color: '#d38cff' }, show: { name: 'SPECT.', full: 'SPECTACLE', color: '#ff9f43' }, num: { name: 'NUMBERS', full: 'BY THE NUMBERS', color: '#b8c4d6' }, wild: { name: 'WILD', full: 'WILDCARD', color: '#7dff8a' } };
+const myDeaths = l => l.deaths.filter(d => d.team === 0 && !d.temp).length;
+const fmtT = t => t.toFixed(1) + 's';
+const round50 = v => Math.max(50, Math.round(v / 50) * 50);
+const fmtK = n => n >= 1000 ? ((n / 1000) % 1 ? (n / 1000).toFixed(1) : String(n / 1000)) + 'K' : String(n);
+// round damage thresholds ("more than 2K") that sit in a plausible band for the unit or team in question
+const DMG_LADDER = [250, 500, 750, 1000, 1500, 2000, 3000, 4000, 6000, 8000, 12000, 16000, 24000, 32000];
+const ladder = (lo, hi) => DMG_LADDER.filter(n => n >= lo && n <= hi);
+function unitLabel(u, list) { const same = list.filter(o => o.def.name === u.def.name); return u.def.name + (same.length > 1 ? ' #' + (same.indexOf(u) + 1) : ''); }
+function topKiller(l, ids) {
+  let best = 0; for (const id of ids) best = Math.max(best, l.kills[id] || 0);
+  if (!best) return null;
+  const tied = ids.filter(id => (l.kills[id] || 0) === best); if (tied.length === 1) return tied[0];
+  const count = {}; for (const d of l.deaths) { if (!tied.includes(d.killer)) continue; count[d.killer] = (count[d.killer] || 0) + 1; if (count[d.killer] === best) return d.killer; }
+  return tied[0];
+}
+function topDamage(l) { let best = null, bv = 0; for (const id in l.dmg) if (l.dmg[id] > bv) { bv = l.dmg[id]; best = id; } return best; }
+// the result screen's MVP: damage plus 80% of healing, both sides
+function mvpOf(l) { let best = null, bv = 0; const ids = new Set(Object.keys(l.dmg).concat(Object.keys(l.healBy))); for (const id of ids) { const v = (l.dmg[id] || 0) + (l.healBy[id] || 0) * 0.8; if (v > bv) { bv = v; best = id; } } return best; }
+function propCandidates() {
+  const mine = fielded().filter(u => !u.temp), foes = enemyUnits.filter(u => !u.temp), myIds = mine.map(u => u.id), foeIds = foes.map(u => u.id), out = [];
+  const P = o => out.push({ status: 'live', boosted: false, revealed: false, ...o });
+  const standing = () => alive(TEAMS[0]).filter(u => !u.temp).length;
+  const kindOf = {}; for (const u of mine.concat(foes)) kindOf[u.id] = u.def.kind;
+  const lastDeath = l => l.deaths[l.deaths.length - 1];
+  const myFirst = l => l.deaths.find(d => d.team === 0 && !d.temp);
+  const deathOf = (l, id) => l.deaths.find(d => d.id === id);
+  const foeKills = l => l.deaths.filter(d => d.team === 1 && myIds.includes(d.killer));
+  const topBy = (obj, ids) => { let best = null, bv = 0; for (const id of ids) if ((obj[id] || 0) > bv) { bv = obj[id]; best = id; } return best; };
+  const allIds = myIds.concat(foeIds), totHp = mine.concat(foes).reduce((a, u) => a + u.maxHp, 0), maxAtk = Math.max(...mine.concat(foes).map(u => u.atk));
+  const totDmg = l => l.teamDmg[0] + l.teamDmg[1];
+  const shooters = mine.some(u => u.def.kind !== 'melee'), sustain = mine.some(u => u.def.kind === 'support' || u.lifesteal > 0 || u.regen > 0);
+  const shielded = mine.some(u => u.shieldMax > 0 || u.def.kind === 'support' || u.def.ult === 'bulwark' || u.def.ult === 'earthquake');
+  // TEMPO
+  for (const N of [15, 20, 25, 30, 40]) P({ id: 'fast' + N, cat: 'tempo', fam: 'fast', excl: 'time', title: 'QUICK WORK', desc: 'win in under ' + N + 's', final: l => l.t < N, live: () => battleTime >= N ? 'bust' : null, show: () => fmtT(battleTime) + ' / ' + N + 's' });
+  P({ id: 'grind', cat: 'tempo', fam: 'grind', excl: 'time', title: 'THE GRIND', desc: 'the fight reaches SUDDEN DEATH (35s)', final: l => l.sudden, live: l => l.sudden ? 'hit' : null, show: () => fmtT(battleTime) + ' / 35s' });
+  for (const N of [20, 30]) P({ id: 'slog' + N, cat: 'tempo', fam: 'slog', excl: 'time', title: 'SLOG', desc: 'the fight lasts over ' + N + 's', final: l => l.t > N, live: () => battleTime > N ? 'hit' : null, show: () => fmtT(battleTime) + ' / ' + N + 's' });
+  for (const [A, B] of [[10, 20], [15, 25], [20, 30]]) P({ id: 'win' + A + B, cat: 'tempo', fam: 'window', excl: 'time', title: 'THE WINDOW', desc: 'the fight ends between ' + A + 's and ' + B + 's', final: l => l.t >= A && l.t <= B, live: () => battleTime > B ? 'bust' : null, show: () => fmtT(battleTime) + ' · ' + A + '-' + B + 's' });
+  for (const N of [5, 8]) P({ id: 'open' + N, cat: 'tempo', fam: 'openact', excl: 'firsttime', title: 'OPENING ACT', desc: 'first blood inside ' + N + 's', final: l => l.deaths.length > 0 && l.deaths[0].t < N, live: l => l.deaths.length ? (l.deaths[0].t < N ? 'hit' : 'bust') : battleTime >= N ? 'bust' : null, show: l => l.deaths.length ? 'first blood at ' + fmtT(l.deaths[0].t) : fmtT(battleTime) + ' / ' + N + 's' });
+  for (const N of [8, 12]) P({ id: 'slow' + N, cat: 'tempo', fam: 'slowstart', excl: 'firsttime', title: 'SLOW START', desc: 'nobody dies in the first ' + N + 's', final: l => !l.deaths.length || l.deaths[0].t >= N, live: l => l.deaths.length ? (l.deaths[0].t >= N ? 'hit' : 'bust') : battleTime >= N ? 'hit' : null, show: l => l.deaths.length ? 'first blood at ' + fmtT(l.deaths[0].t) : fmtT(battleTime) + ' / ' + N + 's' });
+  P({ id: 'bell', cat: 'tempo', fam: 'latekill', excl: 'time', title: 'AFTER THE BELL', desc: 'somebody dies in SUDDEN DEATH', final: l => l.deaths.some(d => d.t >= 35), live: l => l.deaths.some(d => d.t >= 35) ? 'hit' : null, show: () => fmtT(battleTime) + ' / 35s' });
+  P({ id: 'photo', cat: 'tempo', fam: 'photo', excl: 'finish', title: 'PHOTO FINISH', desc: 'the last two deaths are within 1.5s of each other', final: l => l.deaths.length >= 2 && lastDeath(l).t - l.deaths[l.deaths.length - 2].t < 1.5, show: l => l.deaths.length + ' dead' });
+  // CASUALTIES
+  P({ id: 'flawless', cat: 'blood', fam: 'flawless', excl: 'deaths', title: 'FLAWLESS', desc: 'none of your units die', final: l => myDeaths(l) === 0, live: l => myDeaths(l) > 0 ? 'bust' : null, show: l => myDeaths(l) + ' lost' });
+  for (const N of [1, 2]) if (mine.length > N + 1) P({ id: 'tight' + N, cat: 'blood', fam: 'tight', excl: 'deaths', title: 'TIGHT SHIP', desc: 'lose at most ' + N + (N === 1 ? ' unit' : ' units'), final: l => myDeaths(l) <= N, live: l => myDeaths(l) > N ? 'bust' : null, show: l => myDeaths(l) + ' / ' + N + ' lost' });
+  for (let N = 1; N < mine.length; N++) P({ id: 'exact' + N, cat: 'blood', fam: 'exact', excl: 'deaths', title: 'EXACT TOLL', desc: 'lose exactly ' + N + (N === 1 ? ' unit' : ' units'), final: l => myDeaths(l) === N, live: l => myDeaths(l) > N ? 'bust' : null, show: l => myDeaths(l) + ' / ' + N + ' lost' });
+  if (mine.length >= 2) P({ id: 'lastone', cat: 'blood', fam: 'lastone', excl: 'deaths', title: 'LAST ONE STANDING', desc: 'win with exactly 1 unit alive', final: l => l.survivors[0].filter(s => !s.temp).length === 1, show: () => standing() + ' standing' });
+  for (let N = 2; N < mine.length; N++) P({ id: 'strong' + N, cat: 'blood', fam: 'strong', excl: 'deaths', title: 'STRONG FINISH', desc: 'win with ' + N + '+ units standing', final: l => l.survivors[0].filter(s => !s.temp).length >= N, show: () => standing() + ' standing' });
+  if (mine.length >= 3) P({ id: 'pyrrhic', cat: 'blood', fam: 'pyrrhic', excl: 'deaths', title: 'PYRRHIC', desc: 'win, but lose more than half your units', final: l => myDeaths(l) > mine.length / 2, live: l => myDeaths(l) > mine.length / 2 ? 'hit' : null, show: l => myDeaths(l) + ' / ' + mine.length + ' lost' });
+  for (const N of [4, 6, 8]) if (N <= mine.length + foes.length - 1) P({ id: 'blood' + N, cat: 'blood', fam: 'bloodbath', excl: 'deaths', title: 'BLOODBATH', desc: N + '+ deaths, both sides', final: l => l.deaths.length >= N, live: l => l.deaths.length >= N ? 'hit' : null, show: l => l.deaths.length + ' / ' + N + ' dead' });
+  P({ id: 'wounded', cat: 'blood', fam: 'wounded', excl: 'fullhealth', title: 'WALKING WOUNDED', desc: 'every survivor below 50% HP', final: l => l.survivors[0].length > 0 && l.survivors[0].every(s => s.hp < 0.5), show: () => alive(TEAMS[0]).filter(u => u.hp / u.maxHp < 0.5).length + ' / ' + standing() + ' wounded' });
+  // HERO and THEIR SIDE. Units are grouped by class: two knights make one subject ("A KNIGHT: TOP KILLER",
+  // "one of your knights has the most kills") because nobody can tell KNIGHT #1 from KNIGHT #2 on the field.
+  const groups = list => { const m = new Map(); for (const u of list) { const k = u.def.name; if (!m.has(k)) m.set(k, []); m.get(k).push(u); } return [...m.entries()]; };
+  const plural = s => s.toLowerCase() + 's';
+  for (const [name, us] of groups(mine)) {
+    const ids = us.map(u => u.id), one = us.length === 1, key = 'm:' + name, nm = one ? name : 'A ' + name, low = name.toLowerCase(), pl = plural(name);
+    const who = one ? 'your ' + low : 'one of your ' + pl, all = one ? 'your ' + low : 'your ' + pl, allV = one ? '' : ' between them';
+    const K = (l, id) => l.kills[id] || 0, sumOf = (l, obj) => ids.reduce((a, id) => a + (obj[id] || 0), 0), surv = l => l.survivors[0].filter(s => ids.includes(s.id));
+    const atkSum = us.reduce((a, u) => a + u.atk, 0), best = (l, obj) => Math.max(0, ...ids.map(id => obj[id] || 0));
+    const up = () => units.filter(o => ids.includes(o.id) && !o.dead), hpPct = () => { const x = up(); return x.length ? Math.round(Math.max(...x.map(o => o.hp / o.maxHp)) * 100) + '% hp' : 'DOWN'; };
+    P({ id: 'top:' + key, cat: 'hero', fam: 'hero:' + key, excl: 'top', title: nm + ': TOP KILLER', desc: one ? 'most kills on your side' : who + ' has the most kills on your side', final: l => ids.includes(topKiller(l, myIds)), show: l => best(l, l.kills) + ' kills' + (ids.includes(topKiller(l, myIds)) ? ' · leading' : '') });
+    P({ id: 'carry:' + key, cat: 'hero', fam: 'hero:' + key, excl: 'carry', title: nm + ': CARRIES', desc: one ? 'top damage on the whole field' : who + ' does the most damage on the whole field', final: l => ids.includes(topDamage(l)), show: l => fmtNum(best(l, l.dmg)) + ' dmg' + (ids.includes(topDamage(l)) ? ' · top' : '') });
+    P({ id: 'surv:' + key, cat: 'hero', fam: 'hero:' + key, excl: 'life:' + key, title: nm + ': SURVIVES', desc: one ? 'alive when the dust settles' : 'at least one of your ' + pl + ' is alive at the end', final: l => surv(l).length > 0, show: hpPct });
+    P({ id: 'falls:' + key, cat: 'hero', fam: 'hero:' + key, excl: 'life:' + key, title: nm + ': FALLS', desc: one ? 'dies at least once' : 'at least one of your ' + pl + ' dies', final: l => l.deaths.some(d => ids.includes(d.id)), live: l => l.deaths.some(d => ids.includes(d.id)) ? 'hit' : null, show: () => up().length + ' / ' + ids.length + ' up' });
+    if (!one) P({ id: 'wiped:' + key, cat: 'hero', fam: 'hero:' + key, excl: 'life:' + key, title: 'THE ' + pl.toUpperCase() + ': WIPED', desc: 'every one of your ' + pl + ' dies', final: l => ids.every(id => deathOf(l, id)), live: l => ids.every(id => deathOf(l, id)) ? 'hit' : null, show: () => up().length + ' / ' + ids.length + ' up' });
+    P({ id: 'vet:' + key, cat: 'hero', fam: 'hero:' + key, excl: 'kills:' + key, title: nm + ': VETERAN', desc: one ? 'scores 3+ kills' : who + ' scores 3+ kills', final: l => ids.some(id => K(l, id) >= 3), live: l => ids.some(id => K(l, id) >= 3) ? 'hit' : null, show: l => best(l, l.kills) + ' / 3 kills' });
+    P({ id: 'pac:' + key, cat: 'hero', fam: 'hero:' + key, excl: 'kills:' + key, title: nm + ': PACIFIST', desc: one ? 'scores no kill at all' : 'none of your ' + pl + ' scores a kill', final: l => !ids.some(id => K(l, id) > 0), live: l => ids.some(id => K(l, id) > 0) ? 'bust' : null, show: l => sumOf(l, l.kills) + ' kills' });
+    P({ id: 'ult:' + key, cat: 'hero', fam: 'hero:' + key, excl: 'ult:' + key, title: nm + ': ULTS', desc: one ? 'casts at least one ultimate' : who + ' casts an ultimate', final: l => sumOf(l, l.ults) >= 1, live: l => sumOf(l, l.ults) >= 1 ? 'hit' : null, show: () => { const x = up(); return x.length ? 'charge ' + Math.round(Math.max(...x.map(o => o.ult))) + '%' : 'DOWN'; } });
+    P({ id: 'ult2:' + key, cat: 'hero', fam: 'hero:' + key, excl: 'ult:' + key, title: nm + ': DOUBLE ULT', desc: one ? 'casts two or more ultimates' : all + ' cast two or more ultimates' + allV, final: l => sumOf(l, l.ults) >= 2, live: l => sumOf(l, l.ults) >= 2 ? 'hit' : null, show: l => sumOf(l, l.ults) + ' / 2 ults' });
+    for (const N of ladder(atkSum * 6, atkSum * 30)) P({ id: 'dmg' + N + ':' + key, cat: 'hero', fam: 'hero:' + key, excl: 'dmg:' + key, title: nm + ': ' + fmtK(N) + ' DAMAGE', desc: (one ? 'deals ' : all + ' deal ') + 'more than ' + fmtK(N) + ' damage' + allV, final: l => sumOf(l, l.dmg) >= N, live: l => sumOf(l, l.dmg) >= N ? 'hit' : null, show: l => fmtNum(sumOf(l, l.dmg)) + ' / ' + fmtK(N) });
+    P({ id: 'mvp:' + key, cat: 'hero', fam: 'hero:' + key, excl: 'mvp', title: nm + ': MVP', desc: (one ? 'is' : who + ' is') + ' the MVP of the fight (damage plus healing, both sides)', final: l => ids.includes(mvpOf(l)), show: l => (ids.includes(mvpOf(l)) ? 'MVP so far' : 'not the MVP') });
+    if (mine.length >= 2) P({ id: 'bag:' + key, cat: 'hero', fam: 'hero:' + key, excl: 'taken', title: nm + ': PUNCHING BAG', desc: one ? 'takes the most damage on your side' : who + ' takes the most damage on your side', final: l => ids.includes(topBy(l.taken, myIds)), show: l => fmtNum(best(l, l.taken)) + ' taken' + (ids.includes(topBy(l.taken, myIds)) ? ' · most' : '') });
+    P({ id: 'closer:' + key, cat: 'hero', fam: 'hero:' + key, excl: 'closer', title: nm + ': CLOSER', desc: one ? 'scores the final kill of the fight' : who + ' scores the final kill of the fight', final: l => l.deaths.length > 0 && ids.includes(lastDeath(l).killer), show: l => l.deaths.length ? 'last kill: ' + (ids.includes(lastDeath(l).killer) ? low : 'someone else') : 'no kills yet' });
+    P({ id: 'unsc:' + key, cat: 'hero', fam: 'hero:' + key, excl: 'life:' + key, title: nm + ': UNSCATHED', desc: one ? 'finishes above 75% HP' : who + ' finishes above 75% HP', final: l => surv(l).some(s => s.hp > 0.75), show: hpPct });
+    P({ id: 'close:' + key, cat: 'hero', fam: 'hero:' + key, excl: 'life:' + key, title: nm + ': CLOSE CALL', desc: one ? 'drops below 20% HP and still survives' : who + ' drops below 20% HP and still survives', final: l => ids.some(id => l.minHp[id] !== undefined && l.minHp[id] < 0.2 && l.survivors[0].some(s => s.id === id)), show: l => { const x = up(); return x.length ? 'lowest ' + Math.round(Math.min(...ids.map(id => l.minHp[id] === undefined ? 1 : l.minHp[id])) * 100) + '%' : 'DOWN'; } });
+    if (mine.length >= 2) P({ id: 'ftf:' + key, cat: 'hero', fam: 'hero:' + key, excl: 'life:' + key, title: nm + ': FIRST TO FALL', desc: one ? 'is your first casualty' : 'your first casualty is a ' + low, final: l => { const d = myFirst(l); return !!d && ids.includes(d.id); }, live: l => { const d = myFirst(l); return d ? (ids.includes(d.id) ? 'hit' : 'bust') : null; }, show: () => 'no losses yet' });
+    if (us.some(u => u.def.kind === 'support' || u.lifesteal > 0 || u.def.type === 'paladin')) for (const N of [round50(atkSum * 8), round50(atkSum * 16)]) P({ id: 'medic' + N + ':' + key, cat: 'hero', fam: 'hero:' + key, excl: 'heal:' + key, title: nm + ': MEDIC', desc: (one ? 'heals ' : all + ' heal ') + N + '+' + allV, final: l => sumOf(l, l.healBy) >= N, live: l => sumOf(l, l.healBy) >= N ? 'hit' : null, show: l => fmtNum(sumOf(l, l.healBy)) + ' / ' + N + ' healed' });
+    for (const N of [2, 4]) P({ id: 'crit' + N + ':' + key, cat: 'hero', fam: 'hero:' + key, excl: 'crit:' + key, title: nm + ': SHARPSHOOTER', desc: (one ? 'lands ' : all + ' land ') + N + '+ critical hits' + allV, final: l => sumOf(l, l.critsBy) >= N, live: l => sumOf(l, l.critsBy) >= N ? 'hit' : null, show: l => sumOf(l, l.critsBy) + ' / ' + N + ' crits' });
+    P({ id: 'heavy:' + key, cat: 'hero', fam: 'hero:' + key, excl: 'maxhit', title: nm + ': HEAVY HITTER', desc: one ? 'lands the biggest single hit of the fight' : who + ' lands the biggest single hit of the fight', final: l => ids.includes(l.maxHitBy), show: l => 'biggest hit ' + fmtNum(l.maxHit) + (ids.includes(l.maxHitBy) ? ' · ' + low : '') });
+    P({ id: 'fk:' + key, cat: 'first', fam: 'firstkill', excl: 'first', title: nm + ' DRAWS FIRST BLOOD', desc: who + ' scores the first kill of the fight', final: l => l.deaths.length > 0 && ids.includes(l.deaths[0].killer), live: l => l.deaths.length ? (ids.includes(l.deaths[0].killer) ? 'hit' : 'bust') : null, show: () => 'no blood yet' });
+    P({ id: 'fu:' + key, cat: 'first', fam: 'firstult', excl: 'firstult', title: nm + ': FIRST ULT', desc: who + ' casts the first ultimate on the field', final: l => ids.includes(l.firstUlt), live: l => l.firstUlt ? (ids.includes(l.firstUlt) ? 'hit' : 'bust') : null, show: () => 'no ults yet' });
+  }
+  for (const [name, us] of groups(foes)) {
+    const ids = us.map(u => u.id), one = us.length === 1, key = 'f:' + name, low = name.toLowerCase(), pl = plural(name), nm = one ? 'THEIR ' + name : 'THEIR ' + pl.toUpperCase();
+    const who = one ? 'their ' + low : 'one of their ' + pl, K = (l, id) => l.kills[id] || 0, best = (l, obj) => Math.max(0, ...ids.map(id => obj[id] || 0)), dead = l => ids.filter(id => deathOf(l, id));
+    const up = () => units.filter(o => ids.includes(o.id) && !o.dead);
+    P({ id: 'menace:' + key, cat: 'foe', fam: 'foe:' + key, excl: 'fkills:' + key, title: nm + ': MENACE', desc: who + ' kills at least one of yours', final: l => ids.some(id => K(l, id) >= 1), live: l => ids.some(id => K(l, id) >= 1) ? 'hit' : null, show: l => best(l, l.kills) + ' kills' });
+    P({ id: 'harmless:' + key, cat: 'foe', fam: 'foe:' + key, excl: 'fkills:' + key, title: nm + ': HARMLESS', desc: one ? 'kills nobody' : 'none of their ' + pl + ' kills anyone', final: l => !ids.some(id => K(l, id) > 0), live: l => ids.some(id => K(l, id) > 0) ? 'bust' : null, show: l => best(l, l.kills) + ' kills' });
+    if (ids.length < foes.length) P({ id: 'outlast:' + key, cat: 'foe', fam: 'foe:' + key, excl: 'lastfoe', title: nm + ': OUTLASTS', desc: one ? 'is the last of theirs to fall' : 'the last of theirs to fall is a ' + low, final: l => { if (!foeIds.every(f => deathOf(l, f))) return false; let b = null; for (const d of l.deaths) if (foeIds.includes(d.id) && (!b || d.t >= b.t)) b = d; return !!b && ids.includes(b.id); }, live: l => dead(l).length === ids.length && foeIds.some(f => !deathOf(l, f)) ? 'bust' : null, show: l => (foes.length - l.deaths.filter(d => foeIds.includes(d.id)).length) + ' of theirs standing' });
+    P({ id: 'exit:' + key, cat: 'foe', fam: 'foe:' + key, excl: 'ftime:' + key, title: nm + ': EARLY EXIT', desc: who + ' dies inside 10s', final: l => ids.some(id => { const d = deathOf(l, id); return !!d && d.t < 10; }), live: l => ids.some(id => { const d = deathOf(l, id); return !!d && d.t < 10; }) ? 'hit' : battleTime >= 10 ? 'bust' : null, show: () => fmtT(battleTime) + ' / 10s' });
+    P({ id: 'stub:' + key, cat: 'foe', fam: 'foe:' + key, excl: 'ftime:' + key, title: nm + ': STUBBORN', desc: who + ' is still standing at 20s', final: l => ids.some(id => { const d = deathOf(l, id); return !d || d.t > 20; }), live: l => dead(l).length === ids.length && ids.every(id => deathOf(l, id).t <= 20) ? 'bust' : battleTime > 20 && ids.some(id => !deathOf(l, id)) ? 'hit' : null, show: () => fmtT(battleTime) + ' / 20s' });
+    if (ids.length < foes.length) P({ id: 'ftop:' + key, cat: 'foe', fam: 'foe:' + key, excl: 'foetop', title: nm + ': THEIR STAR', desc: who + ' has the most kills on their side', final: l => ids.includes(topKiller(l, foeIds)), show: l => best(l, l.kills) + ' kills' + (ids.includes(topKiller(l, foeIds)) ? ' · leading' : '') });
+    P({ id: 'soak:' + key, cat: 'foe', fam: 'foe:' + key, excl: 'taken', title: nm + ': SOAKS', desc: who + ' takes the most damage on the whole field', final: l => ids.includes(topBy(l.taken, allIds)), show: l => fmtNum(best(l, l.taken)) + ' taken' + (ids.includes(topBy(l.taken, allIds)) ? ' · most' : '') });
+    P({ id: 'fult:' + key, cat: 'foe', fam: 'foe:' + key, excl: 'ult:' + key, title: nm + ': ULTS', desc: who + ' gets an ultimate off', final: l => ids.some(id => (l.ults[id] || 0) >= 1), live: l => ids.some(id => (l.ults[id] || 0) >= 1) ? 'hit' : null, show: () => { const x = up(); return x.length ? 'charge ' + Math.round(Math.max(...x.map(o => o.ult))) + '%' : 'DOWN'; } });
+    P({ id: 'fd:' + key, cat: 'first', fam: 'firstdeath', excl: 'first', title: (one ? '' : 'A ') + name + ' FALLS FIRST', desc: who + ' is the first to die', final: l => l.deaths.length > 0 && ids.includes(l.deaths[0].id), live: l => l.deaths.length ? (ids.includes(l.deaths[0].id) ? 'hit' : 'bust') : null, show: l => l.deaths.length ? '' : 'no blood yet' });
+  }
+  // FIRST BLOOD
+  const fbShow = l => l.deaths.length ? '' : 'no blood yet';
+  P({ id: 'fb0', cat: 'first', fam: 'fb', excl: 'first', title: 'FIRST BLOOD', desc: 'your side scores the first kill', final: l => l.deaths.length > 0 && l.deaths[0].team === 1, live: l => l.deaths.length ? (l.deaths[0].team === 1 ? 'hit' : 'bust') : null, show: fbShow });
+  P({ id: 'fb1', cat: 'first', fam: 'fb', excl: 'first', title: 'THEY DRAW FIRST', desc: 'the enemy scores the first kill', final: l => l.deaths.length > 0 && l.deaths[0].team === 0, live: l => l.deaths.length ? (l.deaths[0].team === 0 ? 'hit' : 'bust') : null, show: fbShow });
+  P({ id: 'fbcrit', cat: 'first', fam: 'fbcrit', excl: 'first', title: 'CRITICAL OPENING', desc: 'the first kill of the fight is a crit', final: l => l.deaths.length > 0 && l.deaths[0].crit, live: l => l.deaths.length ? (l.deaths[0].crit ? 'hit' : 'bust') : null, show: fbShow });
+  P({ id: 'salvo', cat: 'first', fam: 'ultfirst', excl: 'firstult', title: 'OPENING SALVO', desc: 'an ultimate goes off before anyone dies', final: l => l.firstUlt !== null && (!l.deaths.length || l.firstUltT < l.deaths[0].t), live: l => l.firstUlt !== null && !l.deaths.length ? 'hit' : l.deaths.length && l.firstUlt === null ? 'bust' : null, show: l => l.firstUlt ? 'ult ' + fmtT(l.firstUltT) : 'no ults yet' });
+  if (foes.some(u => u.def.kind === 'melee') && foes.some(u => u.def.kind !== 'melee')) {
+    const firstFoe = l => l.deaths.find(d => foeIds.includes(d.id));
+    P({ id: 'frontfirst', cat: 'first', fam: 'fdkind', excl: 'first', title: 'FRONTLINE FIRST', desc: 'the first enemy to die is a melee unit', final: l => { const d = firstFoe(l); return !!d && kindOf[d.id] === 'melee'; }, live: l => { const d = firstFoe(l); return d ? (kindOf[d.id] === 'melee' ? 'hit' : 'bust') : null; }, show: fbShow });
+    P({ id: 'backfirst', cat: 'first', fam: 'fdkind', excl: 'first', title: 'BACKLINE FIRST', desc: 'the first enemy to die is not a melee unit', final: l => { const d = firstFoe(l); return !!d && kindOf[d.id] !== 'melee'; }, live: l => { const d = firstFoe(l); return d ? (kindOf[d.id] !== 'melee' ? 'hit' : 'bust') : null; }, show: fbShow });
+  }
+  // SPECTACLE
+  for (const N of [2, 3]) P({ id: 'streak' + N, cat: 'show', fam: 'streak', excl: 'streak', title: N === 3 ? 'TRIPLE KILL' : 'DOUBLE KILL', desc: 'your side chains ' + N + ' kills', final: l => l.maxStreak[0] >= N, live: l => l.maxStreak[0] >= N ? 'hit' : null, show: l => 'best chain ' + l.maxStreak[0] });
+  P({ id: 'theychain', cat: 'show', fam: 'foestreak', excl: 'foestreak', title: 'THEY CHAIN', desc: 'the enemy scores a double kill', final: l => l.maxStreak[1] >= 2, live: l => l.maxStreak[1] >= 2 ? 'hit' : null, show: l => 'their best chain ' + l.maxStreak[1] });
+  P({ id: 'overkill', cat: 'show', fam: 'overkill', excl: 'overkill', title: 'OVERKILL', desc: 'the killing blow of the fight is a crit', final: l => l.deaths.length > 0 && lastDeath(l).crit, show: l => l.deaths.length ? (lastDeath(l).crit ? 'last kill: CRIT' : 'last kill: plain') : '' });
+  for (const N of [2, 3, 5]) P({ id: 'fw' + N, cat: 'show', fam: 'fireworks', excl: 'fireworks', title: 'FIREWORKS', desc: 'your team casts ' + N + '+ ultimates', final: l => l.teamUlts[0] >= N, live: l => l.teamUlts[0] >= N ? 'hit' : null, show: l => l.teamUlts[0] + ' / ' + N + ' ults' });
+  P({ id: 'silenced', cat: 'show', fam: 'silenced', excl: 'silenced', title: 'SILENCED', desc: 'the enemy casts no ultimate', final: l => l.teamUlts[1] === 0, live: l => l.teamUlts[1] > 0 ? 'bust' : null, show: l => l.teamUlts[1] + ' enemy ults' });
+  P({ id: 'ultoff', cat: 'show', fam: 'bothult', excl: 'silenced', title: 'DUELING ULTS', desc: 'both sides get an ultimate off', final: l => l.teamUlts[0] >= 1 && l.teamUlts[1] >= 1, live: l => l.teamUlts[0] >= 1 && l.teamUlts[1] >= 1 ? 'hit' : null, show: l => l.teamUlts[0] + ' vs ' + l.teamUlts[1] + ' ults' });
+  for (const [mn, mus] of groups(mine)) for (const [fn, fus] of groups(foes)) {
+    const mids = mus.map(u => u.id), fids = fus.map(u => u.id), yours = mus.length === 1 ? 'your ' + mn.toLowerCase() : 'a ' + mn.toLowerCase() + ' of yours', theirs = fus.length === 1 ? 'their ' + fn.toLowerCase() : 'one of their ' + plural(fn), theirLast = fus.length === 1 ? 'their ' + fn.toLowerCase() : 'the last of their ' + plural(fn);
+    P({ id: 'duel:' + mn + ':' + fn, cat: 'show', fam: 'duel', excl: 'duel', title: 'DUEL', desc: yours + ' kills ' + theirs, final: l => l.deaths.some(d => fids.includes(d.id) && mids.includes(d.killer)), live: l => l.deaths.some(d => fids.includes(d.id) && mids.includes(d.killer)) ? 'hit' : null, show: () => 'waiting' });
+    P({ id: 'outlive:' + mn + ':' + fn, cat: 'show', fam: 'outlive', excl: 'life:m:' + mn, title: 'OUTLIVES', desc: yours + ' is still up when ' + theirLast + ' falls', final: l => { if (!fids.every(id => deathOf(l, id))) return false; const tF = Math.max(...fids.map(id => deathOf(l, id).t)); return mids.some(id => { const d = deathOf(l, id); return !d || d.t > tF; }); }, live: l => mids.every(id => deathOf(l, id)) && fids.some(id => !deathOf(l, id)) ? 'bust' : fids.every(id => deathOf(l, id)) && mids.some(id => !deathOf(l, id)) ? 'hit' : null, show: l => mids.filter(id => !deathOf(l, id)).length + ' vs ' + fids.filter(id => !deathOf(l, id)).length + ' up' });
+  }
+  if (mine.length >= 2) P({ id: 'crowned', cat: 'show', fam: 'crowned', excl: 'crowned', title: 'CROWNED', desc: 'one of your units scores 3+ kills', final: l => myIds.some(id => (l.kills[id] || 0) >= 3), live: l => myIds.some(id => (l.kills[id] || 0) >= 3 ? 'hit' : null) ? 'hit' : null, show: l => 'best ' + Math.max(0, ...myIds.map(id => l.kills[id] || 0)) + ' / 3 kills' });
+  P({ id: 'shutout', cat: 'show', fam: 'shutout', excl: 'foekills', title: 'SHUTOUT', desc: 'no enemy scores 2+ kills', final: l => foeIds.every(id => (l.kills[id] || 0) < 2), live: l => foeIds.some(id => (l.kills[id] || 0) >= 2) ? 'bust' : null, show: l => 'their best ' + Math.max(0, ...foeIds.map(id => l.kills[id] || 0)) + ' kills' });
+  if (mine.length >= 2) P({ id: 'theirbest', cat: 'show', fam: 'foe2', excl: 'foekills', title: 'THEIR BEST', desc: 'an enemy scores 2+ kills', final: l => foeIds.some(id => (l.kills[id] || 0) >= 2), live: l => foeIds.some(id => (l.kills[id] || 0) >= 2) ? 'hit' : null, show: l => 'their best ' + Math.max(0, ...foeIds.map(id => l.kills[id] || 0)) + ' / 2 kills' });
+  if (mine.some(u => u.def.dash)) for (const N of [2, 4]) P({ id: 'dash' + N, cat: 'show', fam: 'dashes', excl: 'dashes', title: 'SHADOW WORK', desc: 'your assassins dash ' + N + '+ times', final: l => l.dashes[0] >= N, live: l => l.dashes[0] >= N ? 'hit' : null, show: l => l.dashes[0] + ' / ' + N + ' dashes' });
+  if (mine.some(u => u.def.ult === 'resurrect')) P({ id: 'revive', cat: 'show', fam: 'revive', excl: 'revive', title: 'SECOND COMING', desc: 'one of your fallen units is resurrected', final: l => l.revives[0] >= 1, live: l => l.revives[0] >= 1 ? 'hit' : null, show: l => l.revives[0] + ' revived' });
+  if (mine.some(u => u.frost)) for (const N of [5, 12]) P({ id: 'frozen' + N, cat: 'show', fam: 'frozen', excl: 'frozen', title: 'COLD SNAP', desc: 'your side freezes enemies ' + N + '+ times', final: l => l.frozen[0] >= N, live: l => l.frozen[0] >= N ? 'hit' : null, show: l => l.frozen[0] + ' / ' + N + ' freezes' });
+  if (mine.some(u => u.flame)) for (const N of [3, 6]) P({ id: 'burn' + N, cat: 'show', fam: 'burned', excl: 'burned', title: 'ARSON', desc: 'your side sets enemies alight ' + N + '+ times', final: l => l.burned[0] >= N, live: l => l.burned[0] >= N ? 'hit' : null, show: l => l.burned[0] + ' / ' + N + ' fires' });
+  // BY THE NUMBERS
+  for (const N of [round50(totHp * 0.6), round50(totHp * 0.9), round50(totHp * 1.2)]) P({ id: 'carnage' + N, cat: 'num', fam: 'carnage', excl: 'totaldmg', title: 'CARNAGE', desc: fmtNum(N) + '+ total damage, both sides', final: l => totDmg(l) >= N, live: l => totDmg(l) >= N ? 'hit' : null, show: l => fmtNum(totDmg(l)) + ' / ' + fmtNum(N) });
+  for (const N of ladder(totHp * 0.25, totHp * 1.5)) P({ id: 'teamdmg' + N, cat: 'num', fam: 'teamdmg', excl: 'teamdmg', title: fmtK(N) + ' DEALT', desc: 'your side deals more than ' + fmtK(N) + ' damage', final: l => l.teamDmg[0] >= N, live: l => l.teamDmg[0] >= N ? 'hit' : null, show: l => fmtNum(l.teamDmg[0]) + ' / ' + fmtK(N) });
+  { const N = round50(totHp * 0.6); P({ id: 'scrap', cat: 'num', fam: 'scrap', excl: 'totaldmg', title: 'SCRAP', desc: 'under ' + fmtNum(N) + ' total damage, both sides', final: l => totDmg(l) < N, live: l => totDmg(l) >= N ? 'bust' : null, show: l => fmtNum(totDmg(l)) + ' / ' + fmtNum(N) }); }
+  for (const N of [round50(maxAtk * 2.5), round50(maxAtk * 4)]) P({ id: 'haymaker' + N, cat: 'num', fam: 'haymaker', excl: 'maxhit', title: 'HAYMAKER', desc: 'a single hit of ' + N + '+ damage', final: l => l.maxHit >= N, live: l => l.maxHit >= N ? 'hit' : null, show: l => 'biggest ' + fmtNum(l.maxHit) + ' / ' + N });
+  for (const N of [3, 6, 10]) P({ id: 'crits' + N, cat: 'num', fam: 'crits', excl: 'crits', title: 'LUCKY STRIKES', desc: 'your side lands ' + N + '+ crits', final: l => l.crits[0] >= N, live: l => l.crits[0] >= N ? 'hit' : null, show: l => l.crits[0] + ' / ' + N + ' crits' });
+  P({ id: 'dryspell', cat: 'num', fam: 'nocrits', excl: 'crits', title: 'DRY SPELL', desc: 'your side lands fewer than 2 crits', final: l => l.crits[0] < 2, live: l => l.crits[0] >= 2 ? 'bust' : null, show: l => l.crits[0] + ' crits' });
+  if (shooters) for (const N of [30, 60, 100]) P({ id: 'shots' + N, cat: 'num', fam: 'shots', excl: 'shots', title: 'BARRAGE', desc: 'your side fires ' + N + '+ projectiles', final: l => l.shots[0] >= N, live: l => l.shots[0] >= N ? 'hit' : null, show: l => l.shots[0] + ' / ' + N + ' shots' });
+  if (sustain) for (const N of [200, 500, 1000]) P({ id: 'heals' + N, cat: 'num', fam: 'heals', excl: 'noheals', title: 'FIELD HOSPITAL', desc: 'your side heals ' + N + '+', final: l => l.healed[0] >= N, live: l => l.healed[0] >= N ? 'hit' : null, show: l => fmtNum(l.healed[0]) + ' / ' + N });
+  if (shielded) for (const N of [100, 300]) P({ id: 'shield' + N, cat: 'num', fam: 'shieldwall', excl: 'shieldwall', title: 'SHIELD WALL', desc: 'your shields absorb ' + N + '+ damage', final: l => l.absorbed[0] >= N, live: l => l.absorbed[0] >= N ? 'hit' : null, show: l => fmtNum(l.absorbed[0]) + ' / ' + N + ' absorbed' });
+  for (const N of [3, 5, 8]) P({ id: 'ultparade' + N, cat: 'num', fam: 'ultparade', excl: 'fireworks', title: 'ULT PARADE', desc: N + '+ ultimates cast, both sides', final: l => l.teamUlts[0] + l.teamUlts[1] >= N, live: l => l.teamUlts[0] + l.teamUlts[1] >= N ? 'hit' : null, show: l => (l.teamUlts[0] + l.teamUlts[1]) + ' / ' + N + ' ults' });
+  P({ id: 'odd', cat: 'num', fam: 'parity', excl: 'deaths', title: 'ODD BODIES', desc: 'an odd number of deaths, both sides', final: l => l.deaths.length % 2 === 1, show: l => l.deaths.length + ' dead' });
+  P({ id: 'even', cat: 'num', fam: 'parity', excl: 'deaths', title: 'EVEN BODIES', desc: 'an even number of deaths, both sides', final: l => l.deaths.length % 2 === 0, show: l => l.deaths.length + ' dead' });
+  // WILDCARD
+  P({ id: 'comeback', cat: 'wild', fam: 'comeback', excl: 'comeback', title: 'COMEBACK', desc: 'outnumbered at some point, and still win', final: l => l.outnumbered, show: l => l.outnumbered ? 'outnumbered ✓ · now win' : 'not behind yet' });
+  if (mine.length >= 2) P({ id: 'fullhp', cat: 'wild', fam: 'fullhealth', excl: 'fullhealth', title: 'FULL HEALTH', desc: 'every survivor above 50% HP', final: l => l.survivors[0].length > 0 && l.survivors[0].every(s => s.hp > 0.5), show: () => alive(TEAMS[0]).filter(u => u.hp / u.maxHp <= 0.5).length + ' wounded' });
+  if (sustain) for (const N of [100, 250, 500, 1000]) P({ id: 'noheal' + N, cat: 'wild', fam: 'noheals', excl: 'noheals', title: 'NO HEALS', desc: 'your side heals less than ' + N, final: l => l.healed[0] < N, live: l => l.healed[0] >= N ? 'bust' : null, show: l => fmtNum(l.healed[0]) + ' / ' + N });
+  P({ id: 'untouched', cat: 'wild', fam: 'untouched', excl: 'untouched', title: 'UNTOUCHED', desc: 'an enemy dies without dealing any damage', final: l => foeIds.some(id => !(l.dmg[id] > 0)), live: l => foeIds.every(id => l.dmg[id] > 0) ? 'bust' : null, show: l => foeIds.filter(id => !(l.dmg[id] > 0)).length + ' yet to land a hit' });
+  if (mine.some(u => u.def.kind === 'melee') && mine.some(u => u.def.kind !== 'melee')) {
+    P({ id: 'meleeday', cat: 'wild', fam: 'kindkills', excl: 'kindkills', title: 'MELEE DAY', desc: 'every enemy is killed by your melee units', final: l => { const k = foeKills(l); return k.length > 0 && k.every(d => kindOf[d.killer] === 'melee'); }, live: l => foeKills(l).some(d => kindOf[d.killer] !== 'melee') ? 'bust' : null, show: l => foeKills(l).filter(d => kindOf[d.killer] === 'melee').length + ' / ' + foeKills(l).length + ' melee kills' });
+    P({ id: 'rangedrules', cat: 'wild', fam: 'kindkills', excl: 'kindkills', title: 'RANGED RULES', desc: 'no enemy is killed by your melee units', final: l => { const k = foeKills(l); return k.length > 0 && k.every(d => kindOf[d.killer] !== 'melee'); }, live: l => foeKills(l).some(d => kindOf[d.killer] === 'melee') ? 'bust' : null, show: l => foeKills(l).filter(d => kindOf[d.killer] !== 'melee').length + ' / ' + foeKills(l).length + ' ranged kills' });
+  }
+  if (mine.length >= 2 && mine.length <= foes.length) P({ id: 'spread', cat: 'wild', fam: 'spread', excl: 'spread', title: 'SPREAD THE LOVE', desc: 'every one of your units scores a kill', final: l => myIds.every(id => (l.kills[id] || 0) >= 1), live: l => myIds.every(id => (l.kills[id] || 0) >= 1) ? 'hit' : null, show: l => myIds.filter(id => (l.kills[id] || 0) >= 1).length + ' / ' + myIds.length + ' have a kill' });
+  if (mine.length >= 2) P({ id: 'solo', cat: 'wild', fam: 'solo', excl: 'spread', title: 'SOLO ACT', desc: 'one of your units scores every kill', final: l => { const k = foeKills(l).length; return k > 0 && myIds.some(id => (l.kills[id] || 0) === k); }, live: l => new Set(foeKills(l).map(d => d.killer)).size >= 2 ? 'bust' : null, show: l => new Set(foeKills(l).map(d => d.killer)).size + ' killers' });
+  return out;
+}
+function roundOdds(o) { return o < 3 ? Math.round(o * 20) / 20 : Math.round(o * 10) / 10; }
+// only fights you WON count: a lost fight voids the slip, so "flawless" is really P(win AND flawless)
+function priceProps(logs) {
+  const n = logs.length;
+  return propCandidates().map(pr => { const hits = logs.filter(l => l.won && pr.final(l)).length; pr.p = (hits + 1) / (n + 2); pr.base = roundOdds(clamp(L().edge / pr.p, 1.15, 15)); pr.odds = pr.base; return pr; });
+}
+const bucketOf = pr => pr.odds < 1.8 ? 'safe' : pr.odds < 3.5 ? 'even' : 'long';
+function selectBoard(cands) {
+  for (const pr of cands) { pr.odds = pr.base; pr.boosted = false; pr.revealed = false; }
+  const size = L().board, quota = { safe: 2, even: 3, long: 1 };
+  ['even', 'long', 'safe'].forEach((b, i) => { if (size > 6 + i) quota[b]++; });
+  const inBand = cands.filter(pr => pr.p >= 0.04 && pr.p <= 0.92);
+  const pool = inBand.slice().sort(() => Math.random() - 0.5), out = [], fams = new Set(), cats = {};
+  const ok = pr => !out.includes(pr) && !fams.has(pr.fam) && (cats[pr.cat] || 0) < 2;
+  const take = pr => { out.push(pr); fams.add(pr.fam); cats[pr.cat] = (cats[pr.cat] || 0) + 1; quota[bucketOf(pr)]--; };
+  const hero = pool.find(pr => pr.cat === 'hero' && ok(pr)); if (hero) take(hero);
+  for (const b of ['safe', 'even', 'long']) for (const pr of pool) { if (quota[b] <= 0 || out.length >= size) break; if (bucketOf(pr) === b && ok(pr)) take(pr); }
+  for (const pr of pool) { if (out.length >= size) break; if (ok(pr)) take(pr); }
+  // an army that can't win a single sim still gets something to bet on
+  if (out.length < Math.min(3, size)) for (const pr of cands.slice().sort((a, b) => b.p - a.p)) { if (out.length >= Math.min(3, size)) break; if (ok(pr)) take(pr); }
+  if (L().boost) { const ev = out.filter(pr => bucketOf(pr) === 'even'); if (ev.length) { const b = pick(ev); b.boosted = true; b.odds = roundOdds(b.odds * 1.25); } }
+  if (perkLv('insider') && out.length) pick(out).revealed = true;
+  return out.sort((a, b) => a.odds - b.odds);
+}
+// ---------- the slip ----------
+function ticketOdds(t) { let o = t.legs.reduce((a, l) => a * l.odds, 1); if (t.legs.length > 1) o *= 1 + 0.2 * perkLv('parlayking'); return o; }
+function ticketProfit(t) { return Math.round(t.stake * (ticketOdds(t) - 1) * hotHand() * (1 + 0.12 * perkLv('roller'))); }
+function ticketCap() { return L().tickets + perkLv('slip'); }
+function ticketFor(pr) { return slip.find(t => t.legs.includes(pr)); }
+function stakeRoom(excludeT) { return gold - slip.filter(t => t !== excludeT).reduce((a, t) => a + t.stake, 0); }
+function bookieReact(pr) {
+  const b = bucketOf(pr);
+  const line = pr.id.startsWith('falls:') ? pick(["You'd bet against your own " + pr.title.split(':')[0].toLowerCase() + "? He can hear you.", 'Betting on your own man to fall. Cold. I approve.'])
+    : b === 'long' ? pick(["Bold. I'll pay it. I'll also laugh.", 'A long shot. My favorite kind of donation.', "That one? I've seen it happen. Once."])
+    : b === 'safe' ? pick(['Playing it safe. Sensible. Boring.', 'Short odds. You want a nap, not a bet.'])
+    : pick(['Fair price. Go on.', 'Even money, near enough. Let the dice decide.', "Hm. You know something I don't?"]);
+  bookieSay(line, 'talk');
+}
+function toggleProp(pr) {
+  if (phase !== 'prep') return;
+  const t = ticketFor(pr);
+  if (t) { if (t.legs.length > 1) { toast('SPLIT THE PARLAY FIRST'); return SFX.deny(); } slip.splice(slip.indexOf(t), 1); renderBet(); SFX.buy(); return; }
+  if (slip.length >= ticketCap()) { toast('SLIP FULL · ' + ticketCap() + ' TICKETS MAX IN ' + L().name); return SFX.deny(); }
+  const room = stakeRoom(); if (room < MIN_BET) { toast('NO GOLD LEFT TO STAKE'); return SFX.deny(); }
+  slip.push({ legs: [pr], stake: Math.min(chip, room), status: 'live', paid: 0 });
+  bookieReact(pr); renderBet(); SFX.coin();
+}
+// stake options for one ticket: the league chips that fit, plus "everything left" if that is not already a chip
+function stakeOptions(t) { const room = stakeRoom(t), opts = L().chips.filter(c => c <= room); if (room >= MIN_BET && !opts.includes(room)) opts.push(room); return opts.sort((a, b) => a - b); }
+function stepStake(t, dir) { const opts = stakeOptions(t); if (!opts.length) return SFX.deny(); let i = opts.indexOf(t.stake); if (i < 0) i = opts.findIndex(o => o > t.stake) - 1; const j = clamp(i + dir, 0, opts.length - 1); if (opts[j] === t.stake) return SFX.deny(); t.stake = opts[j]; renderBet(); SFX.buy(); }
+function allInTicket(t) { const room = stakeRoom(t); if (room < MIN_BET) return SFX.deny(); t.stake = room; renderBet(); bookieSay(pick(['All of it. I respect that. I also profit from that.', 'The whole pile. Bold.', 'Everything on one ticket. Your funeral. Or your palace.']), 'talk'); SFX.coin(); }
+function combineParlay() {
+  const singles = slip.filter(t => t.legs.length === 1); if (singles.length < 2) return;
+  if (singles.length > L().parlay) { toast(L().parlay + ' LEGS MAX IN ' + L().name); return SFX.deny(); }
+  const ex = new Set(); for (const t of singles) { const e = t.legs[0].excl; if (ex.has(e)) { toast("THOSE PROPS OVERLAP · GRISWOLD WON'T PARLAY THEM"); return SFX.deny(); } ex.add(e); }
+  const stake = singles.reduce((a, t) => a + t.stake, 0);
+  slip = slip.filter(t => t.legs.length > 1); slip.push({ legs: singles.map(t => t.legs[0]), stake, status: 'live', paid: 0 });
+  bookieSay(pick(['A parlay. My favorite kind of customer.', 'All of them, or nothing. I like you.', 'Multiply the odds, multiply the heartbreak.']), 'talk'); renderBet(); SFX.powerup(1);
+}
+function splitParlay(t) {
+  const i = slip.indexOf(t); if (i < 0) return; slip.splice(i, 1);
+  const per = Math.max(MIN_BET, Math.floor(t.stake / t.legs.length));
+  for (const lg of t.legs) { if (slip.length >= ticketCap()) break; const s = Math.min(per, stakeRoom()); if (s < MIN_BET) break; slip.push({ legs: [lg], stake: s, status: 'live', paid: 0 }); }
+  renderBet(); SFX.buy();
+}
+function rerollBoard() {
+  if (!L().reroll || !odds.ready) return;
+  if (gold - 25 < MIN_BET) { toast('KEEP AT LEAST $' + MIN_BET + ' TO BET'); return SFX.deny(); }
+  gold -= 25; slip = []; board = selectBoard(boardCands); if (priceMemory[lockedSig]) priceMemory[lockedSig].board = board;
+  bookieSay(pick(["Fine. A new line. Same fight, mind you.", "Didn't like those? Picky. Here.", 'Twenty-five gold to make me write again. Fair.']), 'talk'); renderUI(); SFX.buy();
+}
+// ---------- settlement ----------
+function resolveTicket(t) {
+  if (t.status === 'hit') { const profit = ticketProfit(t); t.paid = profit; ticketsWon++; totalWon += profit; biggestWin = Math.max(biggestWin, profit); gold += t.stake + profit; }
+  else {
+    ticketsLost++; let refund = 0;
+    if (insurance && !insuranceUsed) { insuranceUsed = true; refund = t.stake; }
+    else if (perkLv('insure')) refund = Math.round(t.stake * 0.15 * perkLv('insure'));
+    t.paid = -t.stake + refund; gold += refund;
+  }
+  peakGold = Math.max(peakGold, gold);
+}
+function ticketPos(t) { const box = $('slipbox'), el = box && box.querySelector ? box.querySelector(`.trow[data-i="${slip.indexOf(t)}"]`) : null; if (!el) return { x: W * 0.2, y: H * 0.3 }; const r = el.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; }
+// final: end-of-fight settlement, where the result table lists every ticket, so no banners (they would stack on top of VICTORY)
+function ticketFx(t, final = false) {
+  const p = ticketPos(t), names = t.legs.map(l => l.title).join(' + '), hit = t.status === 'hit';
+  // a big word jumps off the tracker row itself, so the eye is pulled to the ticket that just resolved
+  // canvas text sits under the HTML tracker, so the word launches from the panel's right edge into open field
+  const box = $('slipbox'), br = box && !box.hidden && box.getBoundingClientRect ? box.getBoundingClientRect() : null, ex = br && br.width ? br.right + 70 : p.x + 160;
+  texts.push({ x: ex, y: p.y, vx: 70, vy: -110, g: 60, text: hit ? 'CASHED +$' + t.paid : 'BUST', color: hit ? '#7dff8a' : '#ff5a3c', color2: '#fff', scale: S * (hit ? 1.5 : 1.9), t: 0, life: 1.5, crit: true, rot: -0.1, pop: 0 });
+  if (hit) { awardGold(t.stake + t.paid, p.x, p.y, { quiet: true, delay: 0.15 }); ring(p.x, p.y, 40, '#7dff8a', 0.5, 4); if (!final) banner('TICKET CASHED', '#7dff8a', { color2: '#fff', scale: S * 1.9, life: 1.3, y: H * 0.18, sub: names + '  +$' + t.paid, subColor: '#ffd93b' }); SFX.win(); }
+  else { const refund = t.paid + t.stake; if (refund > 0) awardGold(refund, p.x, p.y, { quiet: true }); impactStar(p.x, p.y, '#ff5a3c', 34, 0.3); burstPixels(p.x, p.y, ['#ff5a3c', '#8f2323', '#fff'], 16, 220); if (!final) banner('BUSTED', '#ff8a7e', { color2: '#fff', scale: S * 1.9, life: 1.2, y: H * 0.18, sub: names + (refund ? '  · $' + refund + ' REFUNDED' : '  -$' + t.stake), subColor: '#fff' }); addFlash(0.12, '#ff2a4a'); addTrauma(0.3); SFX.lose(); }
+  renderSlipBox();
+}
+// checks every LIVE ticket against the log. live mode stamps only what can be known now; final mode settles everything
+function settleLive(final) {
+  if (!battleLog || !slip.length) return 0;
+  const resolved = [];
+  for (const t of slip) {
+    if (t.status !== 'live') continue;
+    for (const lg of t.legs) { if (lg.status !== 'live') continue; const r = final ? (lg.final(battleLog) ? 'hit' : 'bust') : (lg.live ? lg.live(battleLog) : null); if (r) lg.status = r; }
+    if (t.legs.some(l => l.status === 'bust')) t.status = 'bust'; else if (t.legs.every(l => l.status === 'hit')) t.status = 'hit'; else continue;
+    resolveTicket(t); resolved.push(t);
+  }
+  resolved.forEach((t, k) => final ? setTimeout(() => ticketFx(t, true), 600 + k * 550) : ticketFx(t));
+  if (resolved.length) renderSlipBox();
+  return resolved.length;
+}
+function renderSlipBox() {
+  // the slip is on show from the moment the stakes leave your pile (dice, vs card, battle); phones only get it once the fight is on
+  const el = $('slipbox'), show = (phase === 'battle' || phase === 'ending' || (!MOBILE && (phase === 'dice' || phase === 'vs'))) && slip.length > 0 && !SIM;
+  el.hidden = !show; if (!show) return;
+  el.innerHTML = `<div class="row"><h3 style="margin:0;font-size:11px">SLIP</h3><span class="muted" style="font-size:9px">$${slipStaked()} riding</span></div>` + slip.map((t, i) => {
+    const st = t.status;
+    const val = st === 'hit' ? '+$' + t.paid : st === 'bust' ? (t.paid + t.stake > 0 ? '$' + (t.paid + t.stake) + ' back' : '-$' + t.stake) : (t.legs.length > 1 ? t.legs.map(l => l.status === 'hit' ? '●' : l.status === 'bust' ? '✕' : '○').join('') : (t.legs[0].show ? t.legs[0].show(battleLog) : ''));
+    const fl = t.flashed !== st; t.flashed = st;
+    return `<div class="trow ${st} ${fl ? 'flash' : ''}" data-i="${i}"><span class="st">${st === 'hit' ? '■ HIT' : st === 'bust' ? '✕ BUST' : '● LIVE'}</span><span class="tn">${esc(t.legs.map(l => l.title).join(' + '))}</span><span class="tv">${esc(val)}</span></div>`;
+  }).join('');
+}
 
 // ---------- enemy generation ----------
 let leagueRound = 0, P0 = 0, enemyHandicap = 1, enemyDesired = 0.5;
@@ -1430,9 +1822,9 @@ function generateEnemy() {
   }
   for (const u of enemyUnits) { u.hp = u.maxHp; u.shield = u.shieldMax; u.baseAtk = u.atk; u.baseHp = u.maxHp; }
   placeFormations();
-  // the curve in real terms: tune the enemy so an AVERAGE investor for this league/round would be a coin flip.
+  // the curve in real terms: tune the enemy so an AVERAGE investor for this league/round wins at the league's target rate.
   // runs incrementally across frames (see stepSims) so round start never hitches
-  tune = { ref: phantomRoster(), lo: 0.25, hi: 3.0, f: 1, best: 1, bestErr: 9, iter: 0, iters: 6, wins: 0, done: 0, per: 8, phase: 'bisect', refine: [], total: 6 * 8 + 2 * 10, spent: 0 };
+  tune = { ref: phantomRoster(), lo: 0.25, hi: 3.0, f: 1, best: 1, bestErr: 9, iter: 0, iters: 6, wins: 0, done: 0, per: 14, phase: 'bisect', refine: [], total: 6 * 14 + 2 * 16, spent: 0 };
   tune.setHandicap = f => { for (const u of enemyUnits) { u.atk = u.baseAtk * f; u.maxHp = u.baseHp * f; u.hp = u.maxHp; } };
   tune.setHandicap(1);
 }
@@ -1441,21 +1833,22 @@ function stepTune(budgetMs) {
   const start = performance.now();
   while (tune && performance.now() - start < budgetMs) {
     const t = tune;
+    const target = L().target; // lose = out, so the average investor is tuned to WIN most fights; the sweat is in the slip
     if (t.phase === 'bisect') {
       if (t.done === 0) { t.f = t.iter === 0 ? 1 : (t.lo + t.hi) / 2; t.setHandicap(t.f); }
-      t.wins += simulateOnce(t.ref) ? 1 : 0; t.done++; t.spent++;
+      t.wins += simulateOnce(t.ref).won ? 1 : 0; t.done++; t.spent++;
       if (t.done >= t.per) {
-        const pw = (t.wins + 0.5) / (t.per + 1), err = Math.abs(pw - 0.5);
+        const pw = (t.wins + 0.5) / (t.per + 1), err = Math.abs(pw - target);
         if (err < t.bestErr) { t.bestErr = err; t.best = t.f; }
-        if (pw < 0.5) t.hi = t.f; else t.lo = t.f;
+        if (pw < target) t.hi = t.f; else t.lo = t.f;
         t.iter++; t.done = 0; t.wins = 0;
-        if (t.iter >= t.iters) { t.phase = 'refine'; t.refine = [t.best * 0.92, t.best * 1.08]; t.per = 10; }
+        if (t.iter >= t.iters) { t.phase = 'refine'; t.refine = [t.best * 0.92, t.best * 1.08]; t.per = 16; }
       }
     } else if (t.phase === 'refine') {
       if (!t.refine.length) { t.setHandicap(t.best); enemyHandicap = t.best; tune = null; scheduleOdds(); break; }
       if (t.done === 0) { t.f = t.refine[0]; t.setHandicap(t.f); }
-      t.wins += simulateOnce(t.ref) ? 1 : 0; t.done++; t.spent++;
-      if (t.done >= t.per) { const err = Math.abs((t.wins + 0.5) / (t.per + 1) - 0.5); if (err < t.bestErr) { t.bestErr = err; t.best = t.f; } t.refine.shift(); t.done = 0; t.wins = 0; }
+      t.wins += simulateOnce(t.ref).won ? 1 : 0; t.done++; t.spent++;
+      if (t.done >= t.per) { const err = Math.abs((t.wins + 0.5) / (t.per + 1) - target); if (err < t.bestErr) { t.bestErr = err; t.best = t.f; } t.refine.shift(); t.done = 0; t.wins = 0; }
     }
   }
 }
@@ -1500,15 +1893,16 @@ function layoutTeam(list, teamId) {
       colIdx++;
     });
   }
+  // a unit the player has placed by hand goes back where they put it (fractions of your half of the field)
+  if (teamId === 0) for (const u of list) if (u.slot) { u.x = clamp(24 + u.slot.fx * (DRAG_X_MAX() - 24), 24, W - 24); u.y = clamp(FIELD_TOP + u.slot.fy * (FIELD_BOTTOM - FIELD_TOP), FIELD_TOP, FIELD_BOTTOM); }
 }
 function startPrep() {
   phase = 'prep'; selected = null; targeting = null; tab = 'bet'; oddsLocked = false; BOOKIE.line = ''; BOOKIE.mood = 'think'; BOOKIE.reacted = false; lockedSig = ''; lockedOdds = null; priceMemory = {};
-  if (gold < MIN_BET) { const marker = 25; gold = marker; goldShow = 0; setTimeout(() => { banner('THE HOUSE FRONTS YOU $' + marker, '#ffd93b', { color2: '#fff', scale: S * 2.2, life: 2.4, sub: 'ALL IN. WIN OR YOU ARE OUT.', subColor: '#ff5a3c' }); awardGold(marker, W / 2, H * 0.4, { quiet: true }); }, 300); }
-  allInForced = gold < 50;
-  bet = { side: null, wager: allInForced ? gold : Math.min(gold, L().chips[0]) };
+  slip = []; board = []; boardCands = []; chip = L().chips[0]; battleLog = null; battleTime = 0;
+  if (gold < MIN_BET) { const marker = 25; gold = marker; goldShow = 0; setTimeout(() => { banner('THE HOUSE FRONTS YOU $' + marker, '#ffd93b', { color2: '#fff', scale: S * 2.2, life: 2.4, sub: 'ONE TICKET. MAKE IT COUNT.', subColor: '#ff5a3c' }); awardGold(marker, W / 2, H * 0.4, { quiet: true }); }, 300); }
   for (const t of TEAMS) { t.graveyard = []; t.streak = 0; }
   units.length = 0; projectiles.length = 0; chests = []; chestPlan = []; useAim = null;
-  for (const u of roster) { if (u.benchNext !== undefined) { u.benched = u.benchNext; delete u.benchNext; } if (u.snap) { Object.assign(u, u.snap); u.snap = null; } u.secondWind = false; u.temp = false; if (u.mutiny) { u.team = TEAMS[0]; u.face = 1; } u.mutiny = false; resetUnitForBattle(u); if (!u.benched) units.push(u); }
+  for (const u of roster) { if (u.benchNext !== undefined) { u.benched = u.benchNext; delete u.benchNext; } if (u.snap) { Object.assign(u, u.snap); u.snap = null; } u.secondWind = false; u.temp = false; resetUnitForBattle(u); if (!u.benched) units.push(u); }
   if (fielded().length === 0) roster[0].benched = false, units.push(roster[0]);
   generateEnemy();
   placeFormations(); scheduleOdds(); rollShop();
@@ -1516,12 +1910,17 @@ function startPrep() {
 }
 function startBattle() {
   if (phase !== 'prep') return;
-  if (!bet.side) { toast('PLACE YOUR BET FIRST'); SFX.deny(); return; }
-  if (!odds.ready) { toast('ODDSMAKERS STILL SIMULATING...'); return; }
-  if (allInForced) bet.wager = gold; else bet.wager = clamp(bet.wager, Math.min(MIN_BET, gold), gold);
-  if (bet.wager <= 0) { toast('YOU HAVE NOTHING LEFT TO BET'); SFX.deny(); return; }
+  if (unitDrag) endUnitDrag(true);
+  if (!odds.ready) { toast('GRISWOLD IS STILL PRICING THE BOARD...'); return; }
+  if (!slip.length) { toast('NO SLIP, NO FIGHT · PICK AT LEAST ONE PROP'); SFX.deny(); return; }
+  if (slipStaked() > gold) { toast('YOUR SLIP IS $' + (slipStaked() - gold) + ' OVER YOUR GOLD · LOWER A STAKE'); SFX.deny(); return; }
+  camSnap();
+  const staked = slipStaked(); gold -= staked; // stakes leave your pile now; winning tickets bring them back with the profit
   selected = null; targeting = null;
   startDice();
+  // the stake flies from the pile onto the slip tracker (or onto the SLIP LOCKED line above the dice on a phone)
+  const box = $('slipbox'), r = !box.hidden && box.getBoundingClientRect ? box.getBoundingClientRect() : null;
+  spendGold(staked, r && r.width ? r.left + r.width / 2 : W / 2, r && r.width ? r.top + r.height / 2 : H * 0.3 - Math.min(84, W / 6) * 1.05, '$' + staked + ' ON THE SLIP');
 }
 let vsT = 0;
 function beginBattle() {
@@ -1540,33 +1939,34 @@ function launchBattle() {
   renderUI();
 }
 function endBattle() {
-  phase = 'result';
-  const won = winner === TEAMS[0];
-  const correct = (bet.side === 'win') === won;
-  const mult = bet.side === 'win' ? odds.win : odds.lose;
-  const stake = Math.min(gold, Math.round(bet.wager * betMul));
-  const sm = correct ? streakMult() : 1;
-  let payout = correct ? Math.round(stake * (mult - 1) * PAYOUT_BOOST * sm * (1 + 0.12 * perkLv('roller'))) : -stake;
-  if (correct && bet.side === 'win' && payout < L().floor) payout = L().floor; // backing yourself always pays at least the league floor
-  if (!correct && insurance) payout = Math.round(payout / 2);
-  if (!correct && perkLv('insure')) payout = Math.round(payout * (1 - 0.15 * perkLv('insure')));
-  if (correct) { betStreak++; betsRight++; leagueWins++; } else { betStreak = 0; betsWrong++; }
-  const income = goldRushTotal;
-  gold += payout; if (payout > 0) { totalWon += payout; biggestWin = Math.max(biggestWin, payout); } peakGold = Math.max(peakGold, gold);
-  if (won) TEAMS[0].wins++; else TEAMS[1].wins++;
-  const busted = gold <= 0;
-  banner(won ? 'VICTORY' : 'DEFEAT', won ? '#ffd93b' : '#ff5a3c', { color2: '#fff', scale: S * 3.6, life: 2.2, shake: 1, sub: correct ? 'BET WON +' + (payout) + ' GOLD' : 'BET LOST ' + payout + ' GOLD', subColor: correct ? '#6aff7a' : '#ff5a3c' });
-  if (correct) { confetti(W / 2, H * 0.3, 160, 600); addFlash(0.4, '#ffd93b'); SFX.win(); } else { SFX.lose(); addFlash(0.3, '#ff2a4a'); }
-  if (payout > 0) awardGold(payout, W / 2, H * 0.42, { delay: 0.9 }); else if (payout < 0) setTimeout(() => loseGold(-payout, W / 2, H * 0.45), 900);
-  lastResult = { won, correct, payout, income, mult, busted, betMul, streak: sm, insured: !correct && insurance, mods: rolledMods.map(m => m.def.name + (m.team === 0 ? ' (you)' : m.team === 1 ? ' (enemy)' : '')) };
-  if (busted) recordRun('bust');
-  if (busted) { setTimeout(() => { banner("YOU'RE OUT!", '#ff2a4a', { color2: '#fff', scale: S * 3.4, life: 2.6, shake: 1, sub: 'THE HOUSE ALWAYS WINS', subColor: '#fff' }); addFlash(0.5, '#ff2a4a'); addTrauma(1); SFX.lose(); }, 1500); }
-  setTimeout(renderUI, busted ? 2600 : 900);
+  phase = 'result'; finalizeLog();
+  const won = winner === TEAMS[0], mods = rolledMods.map(m => m.def.name + (m.team === 0 ? ' (you)' : m.team === 1 ? ' (enemy)' : ''));
+  if (!won) {
+    // the run is over. whatever was still riding, the house keeps.
+    for (const t of slip) if (t.status === 'live') { t.status = 'bust'; t.paid = -t.stake; ticketsLost++; for (const lg of t.legs) if (lg.status === 'live') lg.status = 'bust'; }
+    TEAMS[1].wins++;
+    lastResult = { won: false, over: true, tickets: slip.slice(), purse: 0, net: slip.reduce((a, t) => a + t.paid, 0), mods, time: battleLog ? battleLog.t : battleTime, lost: battleLog ? myDeaths(battleLog) : 0 };
+    recordRun('defeat');
+    banner('DEFEAT', '#ff5a3c', { color2: '#fff', scale: S * 3.6, life: 2.2, shake: 1, sub: 'YOUR RUN ENDS HERE', subColor: '#fff' }); SFX.lose(); addFlash(0.3, '#ff2a4a');
+    setTimeout(() => { banner("YOU'RE OUT!", '#ff2a4a', { color2: '#fff', scale: S * 3.4, life: 2.6, shake: 1, sub: 'THE HOUSE KEEPS THE SLIP', subColor: '#fff' }); addFlash(0.5, '#ff2a4a'); addTrauma(1); SFX.lose(); }, 1500);
+    renderSlipBox(); setTimeout(renderUI, 2800); return;
+  }
+  const n = settleLive(true), purse = L().floor;
+  gold += purse; peakGold = Math.max(peakGold, gold);
+  const net = slip.reduce((a, t) => a + t.paid, 0), hot = hotHand();
+  if (net > 0) hotStreak++; else hotStreak = 0;
+  leagueWins++; TEAMS[0].wins++;
+  lastResult = { won: true, over: false, tickets: slip.slice(), purse, net, hot, income: goldRushTotal, mods, time: battleLog ? battleLog.t : battleTime, lost: battleLog ? myDeaths(battleLog) : 0 };
+  banner('VICTORY', '#ffd93b', { color2: '#fff', scale: S * 3.6, life: 2.2, shake: 1, sub: 'SLIP ' + (net >= 0 ? '+$' + net : '-$' + (-net)) + '  ·  PRIZE MONEY +$' + purse, subColor: net >= 0 ? '#6aff7a' : '#ff5a3c' });
+  confetti(W / 2, H * 0.3, 160, 600); addFlash(0.4, '#ffd93b'); SFX.win();
+  const after = 0.7 + n * 0.55;
+  awardGold(purse, W / 2, H * 0.42, { delay: after });
+  renderSlipBox(); setTimeout(renderUI, after * 1000 + 900);
 }
 let lastResult = null;
-function nextRound() { if (gold <= 0) { renderUI(); return; } round++; leagueRound++; if (canAdvance()) { startPrep(); advanceLeague(); return; } startPrep(); }
+function nextRound() { if (lastResult && lastResult.over) { renderUI(); return; } round++; leagueRound++; if (canAdvance()) { startPrep(); advanceLeague(); return; } startPrep(); }
 function restartGame() {
-  gold = START_GOLD; peakGold = START_GOLD; goldShow = START_GOLD; betStreak = 0; leagueRound = 0; tune = null; perks = {}; betsRight = 0; betsWrong = 0; pickLeagueTheme(); coinFlyers = 0; totalWon = 0; biggestWin = 0; inventory = []; chests = []; useAim = null; round = 1; TEAMS[0].wins = TEAMS[1].wins = 0; league = 0; leagueWins = 0; lbOpen = false; buildBackground();
+  gold = START_GOLD; peakGold = START_GOLD; goldShow = START_GOLD; hotStreak = 0; leagueRound = 0; tune = null; perks = {}; ticketsWon = 0; ticketsLost = 0; slip = []; board = []; boardCands = []; lastResult = null; battleLog = null; pickLeagueTheme(); coinFlyers = 0; totalWon = 0; biggestWin = 0; inventory = []; chests = []; useAim = null; round = 1; TEAMS[0].wins = TEAMS[1].wins = 0; league = 0; leagueWins = 0; lbOpen = false; buildBackground();
   roster.length = 0; units.length = 0; particles.length = 0; texts.length = 0; effects.length = 0; banners.length = 0;
   for (const t of ['knight', 'knight', 'archer', 'mage']) roster.push(spawnUnit(0, t, W * 0.25, H / 2, false));
   startPrep();
@@ -1646,7 +2046,7 @@ function updateUnit(u, dt) {
 }
 
 // ---------- main update ----------
-let statsTick = 0, suddenDeath = false, sdTick = 0;
+let statsTick = 0, slipTick = 0, suddenDeath = false, sdTick = 0;
 function update(rdt) {
   let dt = rdt;
   if (!SIM) {
@@ -1670,14 +2070,17 @@ function update(rdt) {
     if (!SIM) for (let i = 0; i < battleEvents.length; i++) if (battleEvents[i].t <= battleTime) { const ev = battleEvents.splice(i, 1)[0]; i--; ev.fn(); }
     updateChests(dt);
     if (battleTime > sdStart) {
-      if (!suddenDeath) { suddenDeath = true; banner('SUDDEN DEATH', '#ff2a4a', { color2: '#ffd43b', scale: S * 2.8, sub: 'EVERYONE IS BLEEDING OUT', subColor: '#fff', shake: 1, life: 2.2 }); addFlash(0.3, '#ff2a4a'); SFX.surge(); }
+      if (!suddenDeath) { suddenDeath = true; if (battleLog) battleLog.sudden = true; banner('SUDDEN DEATH', '#ff2a4a', { color2: '#ffd43b', scale: S * 2.8, sub: 'EVERYONE IS BLEEDING OUT', subColor: '#fff', shake: 1, life: 2.2 }); addFlash(0.3, '#ff2a4a'); SFX.surge(); }
       const rate = 0.04 * (1 + (battleTime - sdStart) / 6);
       sdTick -= dt;
-      for (const u of units) { if (u.dead || !u.landed) continue; u.hp -= u.maxHp * rate * dt; if (Math.random() < dt * 6) burstPixels(u.x + rand(-8, 8), u.y - rand(0, unitH(u)), ['#ff2a4a', '#8f2323'], 1, 60, S * 0.8); if (u.hp <= 0) { const k = nearestEnemy(u) || u; kill(u, k); } }
+      for (const u of units) { if (u.dead || !u.landed) continue; u.hp -= u.maxHp * rate * dt; if (Math.random() < dt * 6) burstPixels(u.x + rand(-8, 8), u.y - rand(0, unitH(u)), ['#ff2a4a', '#8f2323'], 1, 60, S * 0.8); if (u.hp <= 0) { const k = nearestEnemy(u) || u; kill(u, k, false); } }
       if (sdTick <= 0) { sdTick = 1; for (const u of units) if (!u.dead && u.landed) dmgText(u.x, headY(u), fmtNum(u.maxHp * rate), '#ff2a4a', { scale: S * 0.9, vy: 100 }); }
     }
     const a0 = alive(TEAMS[0]).length, a1 = alive(TEAMS[1]).length;
-    if (a0 === 0 || a1 === 0) { winner = a0 === 0 ? TEAMS[1] : TEAMS[0]; if (a0 === 0 && a1 === 0) winner = TEAMS[1]; phase = 'ending'; endTimer = 1.6; slowmo = Math.max(slowmo, 0.8); }
+    // "outnumbered" for the COMEBACK prop: behind in living units after losing at least one of your own
+    if (battleLog && !battleLog.outnumbered && a0 < a1 && battleLog.deaths.some(d => d.team === 0 && !d.temp)) battleLog.outnumbered = true;
+    if (a0 === 0 || a1 === 0) { winner = a0 === 0 ? TEAMS[1] : TEAMS[0]; if (a0 === 0 && a1 === 0) winner = TEAMS[1]; phase = 'ending'; endTimer = 1.6; slowmo = Math.max(slowmo, 0.8); finalizeLog(); }
+    if (!SIM) { settleLive(false); slipTick -= rdt; if (slipTick <= 0) { slipTick = 0.3; renderSlipBox(); } }
     statsTick -= rdt; if (!SIM && statsOpen && statsTick <= 0) { statsTick = 0.25; renderStats(); }
   } else if (phase === 'ending') { battleTime += dt; updateChests(dt); endTimer -= rdt; if (endTimer <= 0) endBattle(); }
   updateProjectiles(dt);
@@ -1865,25 +2268,36 @@ function drawBanner(b) {
 }
 function drawClouds() { for (const c of clouds) { ctx.fillStyle = 'rgba(255,225,220,0.55)'; const s = c.s * S; ctx.fillRect(c.x, c.y, c.w, s * 3); ctx.fillRect(c.x + c.w * 0.15, c.y - s * 2, c.w * 0.5, s * 2); ctx.fillRect(c.x + c.w * 0.45, c.y - s * 4, c.w * 0.3, s * 2); ctx.fillRect(c.x + c.w * 0.1, c.y + s * 3, c.w * 0.8, s); } }
 function drawFlags() { for (const team of TEAMS) { const x = team.id === 0 ? 24 : W - 24, y = FIELD_TOP - 10, dir = team.id === 0 ? 1 : -1; ctx.fillStyle = '#3f2716'; ctx.fillRect(x - 2, y - 90, 4, 90); ctx.fillStyle = team.P; for (let i = 0; i < 9; i++) { const wob = Math.sin(realTime * 6 + i * 0.6) * 3; const wdt = 34 - i * 2; ctx.fillRect(x + (dir > 0 ? 2 : -2 - wdt), y - 88 + i * 4 + wob, wdt, 4); } ctx.fillStyle = '#ffd93b'; ctx.fillRect(x - 3, y - 96, 6, 6); } }
+// The fight clock counts fight seconds, so at SPEED x2 / x3 it visibly runs two or three times faster:
+// props like QUICK WORK and the 35s sudden death are read off this clock, not off the wall.
+function drawClock(x, y, sc) {
+  const t = battleTime, left = sdStart - t, sd = t >= sdStart;
+  const col = sd ? (Math.sin(realTime * 12) > 0 ? '#ff2a4a' : '#ffd43b') : left < 8 ? '#ff9f43' : '#fff';
+  const txt = (sd ? '+' : '') + (sd ? t - sdStart : t).toFixed(1) + 'S';
+  drawText(txt, x, y, sc * (sd ? 1.15 : 1), col, { color2: sd ? '#fff' : '#ffd93b' });
+  const sub = sd ? 'SUDDEN DEATH' : left < 8 ? 'SUDDEN DEATH IN ' + Math.ceil(left) : speed > 1 ? 'SPEED X' + speed : '';
+  if (sub) drawText(sub, x, y + sc * 6.5, Math.max(1.4, sc * 0.5), sd ? '#ff2a4a' : '#fff', { alpha: sd ? 1 : 0.7 });
+}
 function drawHUD() {
   const s = Math.max(2, S * 0.8), s2 = MOBILE ? 1.6 : Math.max(1, S * 0.6), lx = MOBILE ? 16 : 40, rx = MOBILE ? W - 16 : W - 40;
   if (MOBILE && !PORTRAIT) {
     // landscape phone: two compact lines so the HUD stays above the horizon
-    drawText('ROUND ' + round + '  BETS ' + betsRight + '-' + betsWrong, lx, 14, 2, '#fff', { align: 'left', color2: '#ffd93b' });
-    drawText(L().name + (L().winsReq !== Infinity ? '  RIGHT ' + Math.min(leagueWins, L().winsReq) + '/' + L().winsReq : ''), lx, 30, 1.5, canAdvance() ? '#6aff7a' : L().color, { align: 'left' });
+    drawText('ROUND ' + round + '  TICKETS ' + ticketsWon + '-' + ticketsLost, lx, 14, 2, '#fff', { align: 'left', color2: '#ffd93b' });
+    drawText(L().name + (L().winsReq !== Infinity ? '  WINS ' + Math.min(leagueWins, L().winsReq) + '/' + L().winsReq : ''), lx, 30, 1.5, canAdvance() ? '#6aff7a' : L().color, { align: 'left' });
     if (coinFlyers <= 0) goldShow = lerp(goldShow, gold, 0.15); if (Math.abs(goldShow - gold) < 0.5 && coinFlyers <= 0) goldShow = gold;
     goldBump = Math.max(0, goldBump - 0.06);
     drawText('$' + Math.round(goldShow), rx, 16, 2.6 * (1 + goldBump * 0.35), '#ffd93b', { align: 'right', color2: '#fff' });
     const pile = goldPilePos(), stack = clamp(Math.floor(Math.log2(Math.max(1, goldShow) / 40)) + 1, 1, 6);
     for (let i = 0; i < stack; i++) drawCoin(pile.x + (i % 3) * 4 - 4, pile.y + 4 - Math.floor(i / 3) * 5, S * 1.4, realTime * 2 + i, 1);
-    if (phase === 'battle' || phase === 'ending') drawText(alive(TEAMS[0]).length + ' VS ' + alive(TEAMS[1]).length, W / 2, 14, 2, '#fff', { alpha: 0.8 });
+    if (phase === 'battle' || phase === 'ending') { drawText(alive(TEAMS[0]).length + ' VS ' + alive(TEAMS[1]).length, W / 2, 14, 2, '#fff', { alpha: 0.8 }); drawClock(W / 2, 30, 2.6); }
     if (targeting) drawText('TAP ONE OF YOUR UNITS TO APPLY ' + targeting.up.name, W / 2, H * 0.3, 2, '#6aff7a', { color2: '#fff' });
     return;
   }
   drawText('ROUND ' + round, lx, 26, s, '#fff', { align: 'left' });
-  drawText('BETS ' + betsRight + ' - ' + betsWrong, lx, 50, s * 1.2, '#ffd93b', { align: 'left', color2: '#fff' });
+  drawText('TICKETS ' + ticketsWon + ' - ' + ticketsLost, lx, 50, s * 1.2, '#ffd93b', { align: 'left', color2: '#fff' });
   drawText(L().name, lx, 74, s2, L().color, { align: 'left', color2: '#fff' });
-  if (L().winsReq !== Infinity) drawText('RIGHT BETS ' + Math.min(leagueWins, L().winsReq) + '/' + L().winsReq + (canAdvance() ? ' - PROMOTION NEXT ROUND' : ''), lx, 74 + s2 * 8, Math.max(1.5, s2 * 0.85), canAdvance() ? '#6aff7a' : '#fff', { align: 'left', alpha: 0.8 });
+  if (L().winsReq !== Infinity) drawText('WINS ' + Math.min(leagueWins, L().winsReq) + '/' + L().winsReq + (canAdvance() ? ' - PROMOTION NEXT ROUND' : ''), lx, 74 + s2 * 8, Math.max(1.5, s2 * 0.85), canAdvance() ? '#6aff7a' : '#fff', { align: 'left', alpha: 0.8 });
+  else drawText('WINS ' + leagueWins + ' - ENDLESS', lx, 74 + s2 * 8, Math.max(1.5, s2 * 0.85), '#fff', { align: 'left', alpha: 0.8 });
   if (coinFlyers <= 0) goldShow = lerp(goldShow, gold, 0.15); if (Math.abs(goldShow - gold) < 0.5 && coinFlyers <= 0) goldShow = gold;
   goldBump = Math.max(0, goldBump - 0.06);
   const gs = s * 1.6 * (1 + goldBump * 0.35);
@@ -1891,18 +2305,19 @@ function drawHUD() {
   drawText('GOLD', rx, 52, s2, '#fff', { align: 'right', alpha: 0.7 });
   const pile = goldPilePos(), stack = clamp(Math.floor(Math.log2(Math.max(1, goldShow) / 40)) + 1, 1, 9);
   for (let i = 0; i < stack; i++) drawCoin(pile.x + (i % 3) * 5 - 5, pile.y + 8 - Math.floor(i / 3) * 6 - (i % 3) * 1.5, S * 1.8, realTime * 2 + i, 1);
-  if (betStreak > 0 && phase === 'prep') drawText('STREAK X' + streakMult().toFixed(1), rx, 68, s2, '#ffd93b', { align: 'right', alpha: 0.9 });
+  if (hotStreak > 0 && phase === 'prep') drawText('HOT HAND X' + hotHand().toFixed(2), rx, 68, s2, '#ffd93b', { align: 'right', alpha: 0.9 });
   drawText('PIXEL CLASH', W / 2, 26, s, '#ffd93b', { color2: '#fff' });
   if (phase === 'prep') drawText('YOU VS ' + enemyName, W / 2, 50, s2, '#fff', { alpha: 0.75 });
-  else { drawText(alive(TEAMS[0]).length + ' VS ' + alive(TEAMS[1]).length, W / 2, 50, Math.max(1, S * 0.6), '#fff', { alpha: 0.7 }); if (bet.side) drawText('BET: I ' + bet.side.toUpperCase() + ' $' + bet.wager + ' AT X' + (bet.side === 'win' ? odds.win : odds.lose).toFixed(1), W / 2, 70, Math.max(1, S * 0.6), '#ffd93b', { alpha: 0.85 }); }
+  else { drawText(alive(TEAMS[0]).length + ' VS ' + alive(TEAMS[1]).length, W / 2, 50, Math.max(1, S * 0.6), '#fff', { alpha: 0.7 }); if (phase === 'battle' || phase === 'ending') drawClock(W / 2, 74, Math.max(2.4, S * 1.3)); }
   if (targeting) drawText('CLICK ONE OF YOUR UNITS TO APPLY ' + targeting.up.name, W / 2, H * 0.3, Math.max(2, S), '#6aff7a', { color2: '#fff' });
   if (PORTRAIT && phase === 'prep') drawText('TIP: ROTATE TO LANDSCAPE FOR A WIDER BATTLEFIELD', W / 2, FIELD_BOTTOM + 14, 1.5, '#fff', { alpha: 0.5 });
 }
 function render() {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.imageSmoothingEnabled = false;
-  const zoom = 1 + zoomPunch * 0.035;
-  ctx.save(); ctx.translate(W / 2, H / 2); ctx.scale(zoom, zoom); ctx.rotate(shakeRot); ctx.translate(-W / 2 + shakeX, -H / 2 + shakeY);
+  const zoom = camZ();
+  ctx.save(); ctx.translate(cam.px, cam.py); ctx.scale(zoom, zoom); ctx.rotate(shakeRot); ctx.translate(-cam.x + shakeX, -cam.y + shakeY);
   ctx.drawImage(bg, 0, 0, W, H); drawClouds(); drawFlags();
+  if (unitDrag) drawDragZone();
   const sorted = units.slice().sort((a, b) => a.y - b.y);
   for (const u of sorted) if (u.dead) drawUnit(u);
   for (const c of chests) drawChest(c);
@@ -1918,7 +2333,7 @@ function render() {
     const it = drag.item, ok = overField(drag.x, drag.y), col = ok ? RARITY[it.r].color : '#ff5a3c';
     if (ok) {
       if (it.aim) { ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 3; ctx.setLineDash([8, 6]); ctx.lineDashOffset = -realTime * 60; ctx.globalAlpha = 0.9; ctx.beginPath(); ctx.ellipse(drag.x, drag.y, it.id === 'poison' ? 95 : 115, (it.id === 'poison' ? 95 : 115) * 0.5, 0, 0, TAU); ctx.stroke(); ctx.fillStyle = col; ctx.globalAlpha = 0.12; ctx.fill(); ctx.restore(); }
-      else { const team = ['heal', 'rage', 'haste', 'ward', 'battery', 'apple', 'hourglass', 'horn', 'phoenix', 'bench', 'taint', 'mutiny', 'flag'].includes(it.id) ? TEAMS[0] : TEAMS[1]; ctx.save(); ctx.globalAlpha = 0.08; ctx.fillStyle = col; ctx.fillRect(0, FIELD_TOP - 40, W, FIELD_BOTTOM - FIELD_TOP + 60); ctx.restore(); for (const u of units) { if (u.dead || !u.landed) continue; const mineOk = it.id === 'hourglass' ? true : u.team === team; if (!mineOk) continue; ctx.save(); ctx.strokeStyle = u.team.id === 0 ? '#6aff7a' : '#ff5a3c'; ctx.lineWidth = 3; ctx.globalAlpha = 0.6 + Math.sin(realTime * 10) * 0.3; ctx.beginPath(); ctx.ellipse(u.x, u.y + 2, unitW(u) * 0.65, unitW(u) * 0.24, 0, 0, TAU); ctx.stroke(); ctx.restore(); } }
+      else { const team = ['heal', 'rage', 'haste', 'ward', 'battery', 'apple', 'hourglass', 'horn', 'phoenix', 'adrenaline'].includes(it.id) ? TEAMS[0] : TEAMS[1]; ctx.save(); ctx.globalAlpha = 0.08; ctx.fillStyle = col; ctx.fillRect(0, FIELD_TOP - 40, W, FIELD_BOTTOM - FIELD_TOP + 60); ctx.restore(); for (const u of units) { if (u.dead || !u.landed) continue; const mineOk = it.id === 'hourglass' ? true : u.team === team; if (!mineOk) continue; ctx.save(); ctx.strokeStyle = u.team.id === 0 ? '#6aff7a' : '#ff5a3c'; ctx.lineWidth = 3; ctx.globalAlpha = 0.6 + Math.sin(realTime * 10) * 0.3; ctx.beginPath(); ctx.ellipse(u.x, u.y + 2, unitW(u) * 0.65, unitW(u) * 0.24, 0, 0, TAU); ctx.stroke(); ctx.restore(); } }
       drawText('RELEASE TO USE ' + it.name, W / 2, H * 0.3, Math.max(2, S), col, { color2: '#fff' });
     } else drawText('RELEASE HERE TO CANCEL', W / 2, H * 0.3, Math.max(2, S * 0.8), '#ff5a3c', { alpha: 0.8 });
     ctx.save(); ctx.font = (40 + Math.sin(realTime * 12) * 3) + 'px serif'; ctx.textAlign = 'center'; ctx.shadowColor = col; ctx.shadowBlur = 18; ctx.fillText(it.icon, drag.x, drag.y - 20); ctx.restore();
@@ -1943,13 +2358,13 @@ function rollShop() {
   for (let i = 0; i < L().cards; i++) { const r = rollRarity(); const pool = UPGRADES.filter(x => x.r === r); shopCards.push({ kind: 'up', up: pick(pool), rar: RARITY[r], price: RARITY[r].price }); }
   const types = unlockedTypes().sort(() => Math.random() - 0.5).slice(0, 2);
   for (const t of types) shopCards.push({ kind: 'unit', type: t, price: UNIT_TYPES[t].cost + Math.floor(round * 3) });
-  const dark = Math.random() < 0.6; const pool = CONSUMABLES.filter(c => dark ? c.dark : !c.dark && c.r <= 1); const it = pick(pool); shopCards.push({ kind: 'item', item: it, price: [15, 30, 55, 110][it.r] });
+  const it = pick(CONSUMABLES.filter(c => c.r <= 1)); shopCards.push({ kind: 'item', item: it, price: [15, 30, 55, 110][it.r] });
 }
 function renderShop() {
   const rerollCost = 10;
   UI.shop.innerHTML = shopCards.map((c, i) => {
     if (c.kind === 'up') { const picked = targeting && targeting.index === i; return `<div class="card ${picked ? 'picked' : gold - c.price < MIN_BET ? 'disabled' : ''}" data-i="${i}"><div class="cat skill">${picked ? '▶ APPLYING · PICK A UNIT' : '✦ SKILL'}</div><div class="big">${c.up.icon || '✦'}</div><div class="rar" style="color:${c.rar.color}">${c.rar.name}</div><div class="nm" style="color:${c.up.color}">${esc(c.up.name)}</div><div class="ds">${esc(c.up.desc)}${c.up.only ? '<br><i>' + c.up.only.join('/') + ' only</i>' : ''}</div><div class="pr">${picked ? '<span style="color:#ff9a8e;font-size:10px">tap to cancel</span> ' : ''}$${c.price}</div></div>`; }
-    if (c.kind === 'item') return `<div class="card ${gold - c.price < MIN_BET || inventory.length >= invMax() ? 'disabled' : ''}" data-i="${i}" style="background:${c.item.dark ? '#2a1420' : '#14202e'}"><div class="cat ${c.item.dark ? 'dark' : 'item'}">${c.item.dark ? '☠ SHADY DEALER' : '🧪 CONSUMABLE'}</div><div class="big">${c.item.icon}</div><div class="rar" style="color:${RARITY[c.item.r].color}">${RARITY[c.item.r].name}</div><div class="nm">${esc(c.item.name)}</div><div class="ds">${esc(c.item.desc)}</div><div class="pr">$${c.price}</div></div>`;
+    if (c.kind === 'item') return `<div class="card ${gold - c.price < MIN_BET || inventory.length >= invMax() ? 'disabled' : ''}" data-i="${i}" style="background:#14202e"><div class="cat item">🧪 CONSUMABLE</div><div class="big">${c.item.icon}</div><div class="rar" style="color:${RARITY[c.item.r].color}">${RARITY[c.item.r].name}</div><div class="nm">${esc(c.item.name)}</div><div class="ds">${esc(c.item.desc)}</div><div class="pr">$${c.price}</div></div>`;
     const d = UNIT_TYPES[c.type];
     return `<div class="card unit ${gold - c.price < MIN_BET || roster.length >= rosterCap() ? 'disabled' : ''}" data-i="${i}"><div class="cat unit">⚔ RECRUIT</div><div class="big"><canvas class="ucv" data-type="${c.type}" width="13" height="15"></canvas></div><div class="rar" style="color:#8ec5ff">${d.kind.toUpperCase()}</div><div class="nm">${esc(d.name)}</div><div class="ds">${esc(d.desc)}<br><span class="muted">HP ${d.hp} · ATK ${d.atk}</span></div><div class="pr">$${c.price}</div></div>`;
   }).join('') + `<div style="display:flex;flex-direction:column;gap:6px;justify-content:center"><button id="reroll" ${gold < rerollCost ? 'disabled' : ''}>REROLL<br>$${rerollCost}</button><div class="muted" style="font-size:9px;text-align:center">next unlock:<br>${nextUnlockText()}</div><button id="codexbtn2" style="padding:4px 6px;font-size:10px">CODEX</button></div>`;
@@ -1997,33 +2412,45 @@ function threatTags(list) {
 }
 function renderBet() {
   const p = odds.p, pct = Math.round(p * 100);
-  const wagers = L().chips.filter(w => w <= gold);
-  const toWin = side => { const v = Math.round(bet.wager * ((side === 'win' ? odds.win : odds.lose) - 1) * PAYOUT_BOOST * streakMult() * (1 + 0.12 * perkLv('roller'))); return side === 'win' ? Math.max(v, L().floor) : v; };
   const matchup = `<div class="row" style="align-items:flex-start;gap:8px;margin-bottom:6px"><canvas id="bookiecv" style="width:56px;height:56px;image-rendering:pixelated;flex:none;background:#0b0a14;border:2px solid #3a3260;border-radius:6px"></canvas><div style="flex:1"><div style="font-size:10px;letter-spacing:2px;color:#c85cff">${BOOKIE.name} · ${BOOKIE.title}</div><div id="bookieline" style="font-size:11px;line-height:1.35;background:#1a1530;border:2px solid #3a3260;border-radius:8px;padding:6px 8px;margin-top:3px;min-height:30px">${esc(BOOKIE.line || 'Hmm. Let me have a look at you...')}</div></div></div>
     <h3>THE MATCHUP</h3>
-    <div class="row"><span style="color:#8ec5ff">YOU (${roster.length})</span><span style="color:#ff9a8e">${esc(enemyName)} (${enemyUnits.length})</span></div>
+    <div class="row"><span style="color:#8ec5ff">YOU (${fielded().length})</span><span style="color:#ff9a8e">${esc(enemyName)} (${enemyUnits.length})</span></div>
     <div class="bar" style="display:flex"><i style="width:${pct}%;background:#3b7dd8"></i><i style="flex:1;background:#d83b3b"></i></div>
-    <div class="row"><span class="muted">${odds.ready ? '🔒 ' + BOOKIE.name.toLowerCase() + ' has valued you' : (tune ? 'matchmaking ' + Math.round(tune.spent / tune.total * 100) + '%...' : BOOKIE.name.toLowerCase() + ' is considering you ' + (sim ? sim.done + '/' + sim.total : '') + '...')}</span><b style="color:${odds.ready ? '#fff' : '#ffd93b'}">${pct}%</b></div>
+    <div class="row"><span class="muted">${odds.ready ? '🔒 ' + BOOKIE.name.toLowerCase() + ' has priced the fight' : (tune ? 'matchmaking ' + Math.round(tune.spent / tune.total * 100) + '%...' : BOOKIE.name.toLowerCase() + ' is running the fight ' + (sim ? sim.done + '/' + sim.total : '') + '...')}</span><b style="color:${odds.ready ? (p < 0.5 ? '#ff5a3c' : '#fff') : '#ffd93b'}">${pct}% to win</b></div>
     <div class="row"><span class="muted">power</span><span style="color:#8ec5ff">${Math.round(odds.pb)}</span><span class="muted">vs</span><span style="color:#ff9a8e">${Math.round(odds.pr)}</span></div>
-    <div style="font-size:10px;margin-top:4px;color:${inventory.length ? '#6aff7a' : 'rgba(255,255,255,.55)'}">${oddsLocked ? 'priced when you arrived: upgrades and recruits you buy now are NOT reflected. ' : ''}${inventory.length ? `you hold ${inventory.length} item${inventory.length > 1 ? 's' : ''} the odds don't know about${inventory.some(i => i.dark) ? ' (including sabotage)' : ''}.` : 'your bag, the dice and chests are never priced in.'}</div>`;
+    ${odds.ready && p < 0.5 ? `<div style="color:#ff5a3c;font-weight:900;font-size:11px;margin-top:4px">⚠ ${BOOKIE.name} has you losing this. lose the fight and the run is over. shop, or bench and re-price.</div>` : ''}
+    <div style="font-size:10px;margin-top:4px;color:${inventory.length ? '#6aff7a' : 'rgba(255,255,255,.55)'}">${oddsLocked ? 'the board was priced when you arrived: upgrades and recruits you buy now are NOT reflected. ' : ''}${inventory.length ? `you hold ${inventory.length} item${inventory.length > 1 ? 's' : ''} the board doesn't know about.` : 'your bag, the dice and chests are never priced in.'}</div>`;
   const rosterList = `<div style="margin:8px 0 2px" class="muted">THREATS <span style="font-size:9px">(hover / tap)</span></div><div>${threatTags(enemyUnits) || '<span class="muted">nothing special</span>'}</div>
     <div style="margin:8px 0 4px" class="muted">ENEMY ROSTER (tap to inspect)</div>
     <div style="${MOBILE ? '' : 'max-height:150px;overflow:auto'}">${enemyUnits.map(u => `<div class="en" data-id="${u.id}"><b style="color:${u.def.evolved ? '#ffd700' : '#fff'}">${esc(u.def.name)}</b> <span class="muted">LV${u.level} · ${Math.round(u.maxHp)} HP · ${Math.round(u.atk)} ATK</span><br>${unitTags(u) || '<span class="muted">no upgrades</span>'}</div>`).join('')}</div>`;
-  const compact = MOBILE;
-  const betBox = `<h3 style="margin-top:${MOBILE ? 0 : 12}px">PLACE YOUR BET ${compact ? `<span class="muted" style="font-size:10px;font-weight:normal">· ${pct}% to win · $${bet.wager} wager${bet.side ? ' · pays +$' + toWin(bet.side) : ''}</span>` : ''}</h3>
-    ${allInForced ? `<div style="color:#ff5a3c;font-weight:900;margin-bottom:6px">YOU'RE NEARLY BROKE. ALL IN OR NOTHING: $${gold}</div>` : ''}
-    ${betStreak > 0 ? `<div style="color:#ffd93b;font-size:11px;margin-bottom:4px">🔥 BET STREAK ${betStreak} · payouts x${streakMult().toFixed(1)}</div>` : ''}
-    <div class="row betrow"><button class="blue ${bet.side === 'win' ? 'sel' : ''}" id="betwin" style="flex:1">${compact ? `I WIN · x${odds.win.toFixed(2)}` : `I WIN<br><small>pays x${odds.win.toFixed(2)}</small>`}</button><button class="red ${bet.side === 'lose' ? 'sel' : ''}" id="betlose" style="flex:1">${compact ? `I LOSE · x${odds.lose.toFixed(2)}` : `I LOSE<br><small>pays x${odds.lose.toFixed(2)}</small>`}</button></div>
-    <div style="font-size:10px;margin-top:5px;color:#8ec5ff">🛡 backing yourself always pays at least <b>+$${L().floor}</b> in ${esc(L().name)}. betting LOSE gives that up.</div>
-    <div class="row chips" id="wagers" style="margin-top:${compact ? 6 : 8}px;flex-wrap:wrap;justify-content:flex-start;gap:4px">${allInForced ? '' : wagers.map(w => `<button class="${bet.wager === w ? 'sel' : ''}" data-w="${w}">$${w}</button>`).join('')}<button class="${bet.wager === gold && gold > 0 ? 'sel' : ''}" data-w="all">ALL IN $${gold}</button></div>
-    ${compact ? '' : `<div class="row" style="margin-top:6px"><span class="muted">wager</span><b style="color:#ffd93b">$${bet.wager}</b><span class="muted">to win</span><b style="color:#6aff7a">${bet.side ? '+$' + toWin(bet.side) : '?'}</b></div>`}`;
-  const fightBtn = `<button id="fight" class="gold" ${bet.side && odds.ready ? '' : 'disabled'}>${odds.ready ? (bet.side ? '⚔ FIGHT!' : 'PICK WIN OR LOSE') : '⏳ SIMULATING...'}</button>`;
+  const cap = ticketCap(), staked = slipStaked(), room = gold - staked;
+  const propRow = pr => { const on = !!ticketFor(pr), c = PROP_CATS[pr.cat], full = slip.length >= cap && !on; return `<div class="prop ${on ? 'on' : ''} ${full ? 'off' : ''} ${pr.boosted ? 'boost' : ''}" data-id="${pr.id}" title="${pr.live ? 'settles the moment it is decided, mid-fight' : 'settles when the fight ends'}"><span class="pc" style="background:${c.color}">${c.name}</span><span class="pt"><b>${esc(pr.title)}</b><span>${esc(pr.desc)}${pr.revealed ? ` · <i style="color:#7dff8a">hit ${Math.round(pr.p * 100)}% of the sims</i>` : ''}</span></span><span class="po">${on ? '✓ ' : ''}x${pr.odds.toFixed(2)}${pr.boosted ? '<small>BOOSTED</small>' : ''}</span></div>`; };
+  const boardBox = `<h3 style="margin-top:${MOBILE ? 0 : 10}px">THE BOARD <span class="muted" style="font-size:10px;font-weight:normal">· ${odds.ready ? board.length + ' props · tap to add' : 'griswold is still pricing...'}</span></h3>
+    ${odds.ready ? board.map(propRow).join('') + `<div class="muted" style="font-size:10px;margin:2px 0 4px">tap a prop to put <b style="color:#ffd93b">$${chip}</b> on it · tap again to take it off · change the chip below</div>` : '<div class="muted" style="font-size:11px;padding:8px 0">the board goes up when the sims finish' + (sim && sim.total ? ' · ' + sim.done + '/' + sim.total : '') + '</div>'}
+    ${odds.ready && L().reroll ? `<button id="reroll_board" style="width:100%;margin-top:4px;padding:5px;font-size:10px" ${gold - 25 < MIN_BET ? 'disabled' : ''}>ASK FOR A NEW LINE · $25</button>` : ''}`;
+  const ticketRow = (t, i) => { const par = t.legs.length > 1; return `<div class="ticket ${par ? 'parlay' : ''}" data-i="${i}"><span class="tl"><b style="color:${par ? '#d38cff' : '#fff'}">${par ? 'PARLAY · ' : ''}${esc(t.legs.map(l => l.title).join(' + '))}</b><br><small>x${ticketOdds(t).toFixed(2)} · to win <span style="color:#6aff7a">+$${ticketProfit(t)}</span></small></span><button class="stk" data-i="${i}" data-d="-1" title="smaller stake" ${stakeOptions(t)[0] >= t.stake ? 'disabled' : ''}>−</button><b style="color:#ffd93b;min-width:38px;text-align:center">$${t.stake}</b><button class="stk" data-i="${i}" data-d="1" title="bigger stake" ${stakeOptions(t).at(-1) <= t.stake ? 'disabled' : ''}>+</button><button class="allin" data-i="${i}" title="everything you have left goes on this ticket">ALL</button>${par ? `<button class="split red" data-i="${i}">SPLIT</button>` : ''}<button class="rm" data-i="${i}">✕</button></div>`; };
+  const singles = slip.filter(t => t.legs.length === 1), parlayOdds = singles.reduce((a, t) => a * t.legs[0].odds, 1) * (1 + 0.2 * perkLv('parlayking'));
+  const slipBox = `<h3 style="margin-top:10px">YOUR SLIP <span class="muted" style="font-size:10px;font-weight:normal">· ${slip.length}/${cap} tickets</span></h3>
+    <div class="row chips" style="flex-wrap:wrap;gap:4px;justify-content:flex-start"><span class="muted" style="font-size:10px">chip</span>${L().chips.map(c => `<button class="chipbtn ${chip === c ? 'sel' : ''}" data-c="${c}" ${c > Math.max(gold, room) ? 'disabled' : ''}>$${c}</button>`).join('')}</div>
+    ${slip.length ? slip.map(ticketRow).join('') : '<div class="muted" style="font-size:11px;padding:6px 0">empty. tap a prop on the board.</div>'}
+    ${L().parlay >= 2 && singles.length >= 2 ? `<button id="parlay" style="width:100%;margin-top:4px;padding:6px;font-size:11px;border-color:#5a2a90;background:#3a2060">COMBINE ${singles.length} INTO A PARLAY · x${parlayOdds.toFixed(2)}</button>` : (L().parlay < 2 && slip.length >= 2 ? `<div class="muted" style="font-size:10px">parlays open in ${esc(LEAGUES[1].name)}</div>` : '')}
+    ${hotStreak > 0 ? `<div style="color:#ffd93b;font-size:11px;margin-top:4px">🔥 HOT HAND ${hotStreak} · profits x${hotHand().toFixed(2)}</div>` : ''}
+    <div class="row" style="margin-top:6px"><span class="muted">staked</span><b style="color:${staked > gold ? '#ff5a3c' : '#ffd93b'}">$${staked}</b><span class="muted">to win</span><b style="color:#6aff7a">+$${slipToWin()}</b><span class="muted">left</span><b>$${Math.max(0, room)}</b></div>`;
+  const fightBtn = `<button id="fight" class="gold" ${slip.length && odds.ready && staked <= gold ? '' : 'disabled'}>${!odds.ready ? '⏳ SIMULATING...' : !slip.length ? 'PICK A PROP' : staked > gold ? 'SLIP OVER GOLD' : '⚔ FIGHT!'}</button>`;
+  const compactLine = `<div style="font-size:11px;margin-bottom:6px"><b style="color:${odds.ready && p < 0.5 ? '#ff5a3c' : '#8ec5ff'}">${pct}%</b> to win · <span style="color:#c85cff">${BOOKIE.name}:</span> <i>${esc(BOOKIE.line || 'Let me have a look at you...')}</i></div>`;
+  const oldBody = UI.right.querySelector('.body'), scrollAt = oldBody ? oldBody.scrollTop : 0; // re-rendering must not yank the list back to the top
   UI.right.innerHTML = MOBILE
-    ? `<div class="body">${betBox}${matchup}${rosterList}</div><div class="foot">${fightBtn}</div>`
-    : matchup + rosterList + betBox + fightBtn + `<div class="muted" style="font-size:10px;margin-top:6px;text-align:center">no safety net: bets are your only income. lose your all-in and you're out.</div>`;
-  $('betwin').onclick = () => { bet.side = 'win'; renderBet(); SFX.buy(); };
-  $('betlose').onclick = () => { bet.side = 'lose'; renderBet(); SFX.buy(); };
-  UI.right.querySelectorAll('#wagers button').forEach(b => b.onclick = () => { bet.wager = b.dataset.w === 'all' ? gold : Math.min(gold, +b.dataset.w); renderBet(); });
+    ? `<div class="body">${compactLine}${boardBox}${slipBox}${matchup}${rosterList}</div><div class="foot">${fightBtn}</div>`
+    : `<div class="body">${matchup}${rosterList}${boardBox}${slipBox}</div><div class="foot">${fightBtn}<div class="muted" style="font-size:10px;margin-top:5px;text-align:center">lose the fight and the run is over. no pressure.</div></div>`;
+  const newBody = UI.right.querySelector('.body'); if (newBody) newBody.scrollTop = scrollAt;
+  UI.right.querySelectorAll('.prop').forEach(el => el.onclick = () => { const pr = board.find(x => x.id === el.dataset.id); if (pr) toggleProp(pr); });
+  UI.right.querySelectorAll('.chipbtn').forEach(b => b.onclick = () => { chip = +b.dataset.c; renderBet(); SFX.buy(); });
+  UI.right.querySelectorAll('.stk').forEach(b => b.onclick = () => stepStake(slip[+b.dataset.i], +b.dataset.d));
+  UI.right.querySelectorAll('.allin').forEach(b => b.onclick = () => allInTicket(slip[+b.dataset.i]));
+  UI.right.querySelectorAll('.split').forEach(b => b.onclick = () => splitParlay(slip[+b.dataset.i]));
+  UI.right.querySelectorAll('.rm').forEach(b => b.onclick = () => { slip.splice(+b.dataset.i, 1); renderBet(); SFX.buy(); });
+  const pb = $('parlay'); if (pb) pb.onclick = combineParlay;
+  const rb = $('reroll_board'); if (rb) rb.onclick = rerollBoard;
   $('fight').onclick = startBattle;
   UI.right.querySelectorAll('.en').forEach(el => el.onclick = () => { selected = enemyUnits.find(u => u.id === el.dataset.id); targeting = null; tab = 'army'; renderUI(); });
 }
@@ -2032,7 +2459,7 @@ function renderUnitPanel() {
   const leagueBlock = `<div class="cxu" style="margin-bottom:8px;border-color:${L().color}"><div class="row"><b style="color:${L().color}">${L().tier} · ${esc(L().name)}</b><span class="muted">league ${league + 1}/${LEAGUES.length}</span></div>
     ${Object.keys(perks).length ? `<div style="margin-top:4px;font-size:10px"><span class="muted">RELICS</span> ${RELICS.filter(r => perkLv(r.id)).map(r => `<span class="tag" style="background:#ffd93b" data-tip="<b>${esc(r.name)}</b> LV${perkLv(r.id)}<br>${esc(r.desc)}">${r.icon}${perkLv(r.id) > 1 ? 'x' + perkLv(r.id) : ''}</span>`).join(' ')}</div>` : ''}
     <div class="row" style="margin-top:4px"><span class="muted">peak $${peakGold} · won $${totalWon}</span><button id="cashout" class="${cashoutArm > 0 ? 'red' : ''}" style="padding:3px 8px;font-size:10px">${cashoutArm > 0 ? 'CONFIRM CASH OUT' : 'CASH OUT'}</button></div>
-    ${nx ? `<div style="margin-top:6px"><div class="row" style="font-size:11px"><span class="muted">promotion</span><b>${Math.min(leagueWins, L().winsReq)}/${L().winsReq} right bets</b></div><div class="bar" style="margin:3px 0"><i style="width:${Math.min(100, leagueWins / L().winsReq * 100)}%;background:${nx.color}"></i></div><div class="muted" style="font-size:10px">next: <b style="color:${nx.color}">${esc(nx.name)}</b> · automatic, no fee · ${esc(nx.perk)}</div></div>` : '<div class="muted" style="margin-top:4px">top league. nothing above but glory.</div>'}</div>`;
+    ${nx ? `<div style="margin-top:6px"><div class="row" style="font-size:11px"><span class="muted">promotion</span><b>${Math.min(leagueWins, L().winsReq)}/${L().winsReq} wins</b></div><div class="bar" style="margin:3px 0"><i style="width:${Math.min(100, leagueWins / L().winsReq * 100)}%;background:${nx.color}"></i></div><div class="muted" style="font-size:10px">next: <b style="color:${nx.color}">${esc(nx.name)}</b> · automatic, no fee · ${esc(nx.perk)}</div></div>` : '<div class="muted" style="margin-top:4px">top league. nothing above but glory.</div>'}</div>`;
   const applying = targeting ? `<div style="margin-bottom:6px;padding:6px 8px;border:2px solid #ffd93b;border-radius:6px;background:rgba(255,217,59,.1);font-size:11px">▶ APPLYING <b style="color:${targeting.up.color}">${targeting.up.icon || ''} ${esc(targeting.up.name)}</b> · tap one of your units${targeting.up.only ? ' (' + targeting.up.only.join('/') + ' only)' : ''} · <span class="muted">ESC cancels</span></div>` : '';
   const hdr = applying + `<div class="row"><h3 style="margin:0">YOUR ARMY <span class="muted" style="font-size:10px">${roster.length}/${rosterCap()}</span></h3><span><button id="codexbtn" style="padding:4px 8px;font-size:10px">CODEX</button> <button id="lbbtn" style="padding:4px 8px;font-size:10px">BOARDS</button></span></div>` + leagueBlock;
   const bagStrip = MOBILE ? `<div class="row" style="margin:6px 0"><span class="muted">BAG</span><span style="display:flex;gap:6px">${Array.from({ length: invMax() }, (_, i) => { const it = inventory[i]; return it ? `<span class="tag" style="background:${RARITY[it.r].color};font-size:14px;padding:2px 6px" data-tip="<b>${esc(it.name)}</b><br>${esc(it.desc)}<br><i>usable during battle</i>">${it.icon}</span>` : `<span class="tag" style="background:#2a2440;color:#666;font-size:14px;padding:2px 6px">·</span>`; }).join('')}</span></div>` : '';
@@ -2041,7 +2468,7 @@ function renderUnitPanel() {
   // two are never showing the same numbers at the same time.
   const rows = roster.map(r => `<div class="en urow${selected === r ? ' usel' : ''}" data-id="${r.id}" style="opacity:${r.benched ? .55 : 1}"><span class="chev">›</span><b style="color:${r.def.evolved ? '#ffd700' : '#fff'}">${esc(r.def.name)}</b> <span class="muted">LV${r.level}</span>${r.benched ? '<span class="benchtag">BENCHED</span>' : ''}</div>`).join('');
   UI.left.innerHTML = hdr + bagStrip
-    + `<div class="muted" style="margin:6px 0;font-size:10px">LINEUP · ${fielded().length}/${roster.length} fighting · tap a name, or the unit on the field, for its stats, upgrades and evolution</div>`
+    + `<div class="muted" style="margin:6px 0;font-size:10px">LINEUP · ${fielded().length}/${roster.length} fighting · tap a name, or the unit on the field, for its stats, upgrades and evolution · <b style="color:#8ec5ff">drag a unit on the field to move it</b>, drop it on a teammate to swap</div>`
     + `<div>${rows}</div>`
     + `<div class="muted" style="font-size:10px;margin:6px 0 0">benching recalls ${BOOKIE.name.toLowerCase()}: same army keeps the price, a changed one gets re-valued (upgrades included)</div>`;
   UI.left.querySelectorAll('.urow').forEach(el => el.onclick = () => {
@@ -2063,22 +2490,29 @@ function renderStats() {
 function renderResult() {
   const r = lastResult; if (!r) return;
   const all = roster.concat(enemyUnits); const mvp = all.slice().sort((a, b) => (b.stats.dmg + b.stats.healed * 0.8) - (a.stats.dmg + a.stats.healed * 0.8))[0];
-  UI.result.innerHTML = `<h1 style="color:${r.won ? '#ffd93b' : '#ff5a3c'}">${r.won ? 'VICTORY' : 'DEFEAT'}</h1>
-    <div class="muted">you bet <b style="color:#fff">I ${bet.side.toUpperCase()}</b> for <b style="color:#ffd93b">$${bet.wager}</b> at x${r.mult.toFixed(2)}</div>
-    <div class="big" style="color:${r.correct ? '#6aff7a' : '#ff5a3c'};margin:10px 0">${r.correct ? 'BET WON  +$' + r.payout : 'BET LOST  -$' + Math.abs(r.payout)}${r.betMul > 1 ? ' <span class="muted" style="font-size:12px">(doubled)</span>' : ''}${r.correct && r.streak > 1 ? ` <span style="font-size:13px;color:#ffd93b">STREAK x${r.streak.toFixed(1)}</span>` : ''}${r.correct && bet.side === 'win' && r.payout === L().floor ? ' <span class="muted" style="font-size:12px">(league minimum)</span>' : ''}${r.insured ? ' <span class="muted" style="font-size:12px">(insured, half refunded)</span>' : ''}</div>
-    ${r.mods && r.mods.length ? `<div class="muted" style="font-size:11px">dice: ${r.mods.map(esc).join(' · ')}</div>` : ''}${r.income ? `<div style="color:#ffd93b;font-size:12px">gold rush +$${r.income}</div>` : ''}
-    <div class="row" style="justify-content:center;gap:24px"><span class="muted">gold now <b style="color:#ffd93b">$${gold}</b></span><span class="muted">bets <b style="color:#fff">${betsRight} right · ${betsWrong} wrong</b></span></div>
-    ${canAdvance() ? `<div style="margin-top:10px;color:${LEAGUES[league + 1].color};font-weight:900;font-size:16px;letter-spacing:2px">🏆 PROMOTION EARNED → ${esc(LEAGUES[league + 1].name)}</div>` : (LEAGUES[league + 1] ? `<div class="muted" style="margin-top:10px">right bets ${Math.min(leagueWins, L().winsReq)}/${L().winsReq} toward promotion</div>` : '')}
+  const staked = r.tickets.reduce((a, t) => a + t.stake, 0), hits = r.tickets.filter(t => t.status === 'hit').length;
+  const rows = r.tickets.map(t => `<tr class="${t.status}"><td>${t.status === 'hit' ? '■' : '✕'} ${esc(t.legs.map(l => l.title).join(' + '))}${t.legs.length > 1 ? ' <span class="muted">parlay</span>' : ''}</td><td class="n">x${ticketOdds(t).toFixed(2)}</td><td class="n">$${t.stake}</td><td class="n" style="color:${t.paid >= 0 ? '#7dff8a' : '#ff8a7e'}">${t.paid >= 0 ? '+' : '-'}$${Math.abs(t.paid)}</td></tr>`).join('');
+  UI.result.innerHTML = `<h1 style="color:#ffd93b">VICTORY</h1>
+    <div class="muted">won in ${(r.time || 0).toFixed(1)}s · ${r.lost || 0} of yours lost · ${hits}/${r.tickets.length} tickets hit</div>
+    <table class="settle">${rows}
+      <tr><td><b>slip</b> <span class="muted">staked $${staked}</span></td><td></td><td></td><td class="n" style="color:${r.net >= 0 ? '#7dff8a' : '#ff8a7e'}"><b>${r.net >= 0 ? '+' : '-'}$${Math.abs(r.net)}</b></td></tr>
+      <tr><td><b>prize money</b> <span class="muted">${esc(L().name)}</span></td><td></td><td></td><td class="n" style="color:#7dff8a"><b>+$${r.purse}</b></td></tr>
+      ${r.income ? `<tr><td>gold rush</td><td></td><td></td><td class="n" style="color:#ffd93b">+$${r.income}</td></tr>` : ''}
+      <tr><td>hot hand</td><td></td><td></td><td class="n" style="color:${hotStreak > 0 ? '#ffd93b' : 'rgba(255,255,255,.5)'}">${hotStreak > 0 ? 'x' + hotHand().toFixed(2) + ' next round' : 'reset'}</td></tr></table>
+    ${r.mods && r.mods.length ? `<div class="muted" style="font-size:11px">dice: ${r.mods.map(esc).join(' · ')}</div>` : ''}
+    <div class="row" style="justify-content:center;gap:24px"><span class="muted">gold now <b style="color:#ffd93b">$${gold}</b></span><span class="muted">tickets <b style="color:#fff">${ticketsWon} hit · ${ticketsLost} bust</b></span></div>
+    ${canAdvance() ? `<div style="margin-top:10px;color:${LEAGUES[league + 1].color};font-weight:900;font-size:16px;letter-spacing:2px">🏆 PROMOTION EARNED → ${esc(LEAGUES[league + 1].name)}</div>` : (LEAGUES[league + 1] ? `<div class="muted" style="margin-top:10px">wins ${Math.min(leagueWins, L().winsReq)}/${L().winsReq} toward promotion</div>` : `<div class="muted" style="margin-top:10px">${leagueWins} wins in the endless league</div>`)}
     ${mvp ? `<div style="margin:14px 0 4px"><span class="muted">MVP</span> <b style="color:${mvp.team.S}">${esc(mvp.def.name)}</b> <span class="muted">(${mvp.team.name}) · ${Math.round(mvp.stats.dmg)} dmg · ${mvp.stats.kills} kills · ${mvp.stats.ults} ults</span></div>` : ''}
     <div class="row" style="justify-content:center;gap:10px;margin-top:14px"><button id="showstats">STATS</button><button id="next" class="gold" style="font-size:18px;padding:12px 28px">${canAdvance() ? 'ADVANCE TO ' + esc(LEAGUES[league + 1].name) + ' →' : 'NEXT ROUND →'}</button></div>`;
   $('next').onclick = () => { nextRound(); SFX.buy(); };
   $('showstats').onclick = () => { statsOpen = !statsOpen; renderUI(); };
 }
 function renderGameOver() {
-  const co = lastResult && lastResult.cashout;
-  UI.gameover.innerHTML = `<h1 style="${co ? 'color:#ffd93b' : ''}">${co ? 'CASHED OUT' : "YOU'RE OUT"}</h1>
-    <div class="muted">${co ? 'you walked away with $' + gold + '. run recorded.' : 'you went all in and lost everything'}</div>
-    <div class="row" style="justify-content:center;gap:18px;margin:14px 0;flex-wrap:wrap"><span class="muted">reached <b style="color:${L().color}">${esc(L().name)}</b></span><span class="muted">rounds survived <b style="color:#fff">${round}</b></span><span class="muted">bets <b style="color:#fff">${betsRight}-${betsWrong}</b></span><span class="muted">peak gold <b style="color:#ffd93b">$${peakGold}</b></span><span class="muted">total winnings <b style="color:#6aff7a">$${totalWon}</b></span></div>
+  const co = lastResult && lastResult.cashout, tk = (lastResult && lastResult.tickets) || [];
+  UI.gameover.innerHTML = `<h1 style="${co ? 'color:#ffd93b' : ''}">${co ? 'CASHED OUT' : 'DEFEAT'}</h1>
+    <div class="muted">${co ? 'you walked away with $' + gold + '. run recorded.' : 'your army fell. the run is over and the house keeps the slip.'}</div>
+    ${!co && tk.length ? `<table class="settle" style="max-width:420px;margin:8px auto">${tk.map(t => `<tr class="${t.status}"><td>${t.status === 'hit' ? '■ cashed early' : '✕ void'}</td><td>${esc(t.legs.map(l => l.title).join(' + '))}</td><td class="n" style="color:${t.paid >= 0 ? '#7dff8a' : '#ff8a7e'}">${t.paid >= 0 ? '+' : '-'}$${Math.abs(t.paid)}</td></tr>`).join('')}</table>` : ''}
+    <div class="row" style="justify-content:center;gap:18px;margin:14px 0;flex-wrap:wrap"><span class="muted">reached <b style="color:${L().color}">${esc(L().name)}</b></span><span class="muted">rounds survived <b style="color:#fff">${round}</b></span><span class="muted">tickets <b style="color:#fff">${ticketsWon}-${ticketsLost}</b></span><span class="muted">peak gold <b style="color:#ffd93b">$${peakGold}</b></span><span class="muted">total winnings <b style="color:#6aff7a">$${totalWon}</b></span></div>
     <div style="margin:6px 0 12px" class="muted">your army: ${roster.map(u => `<b style="color:${u.def.evolved ? '#ffd700' : '#fff'}">${esc(u.def.name)}</b> LV${u.level}`).join(', ')}</div>
     <div class="row" style="justify-content:center;gap:10px;flex-wrap:wrap"><span class="muted">name</span><input class="nm" id="goname" maxlength="10" value="${esc(playerName())}"><button id="gosave" style="padding:6px 10px">SAVE NAME</button></div>
     <div class="row" style="justify-content:center;gap:10px;margin-top:12px"><button id="showlb">LEADERBOARDS</button>${co ? '' : '<button id="showstats2">STATS</button>'}<button id="restart" class="gold" style="font-size:18px;padding:12px 28px">START OVER</button></div>`;
@@ -2091,21 +2525,24 @@ function renderCodex() {
   const evoStats = e => ['hpMul', 'atkMul', 'rangeMul'].filter(k => e[k]).map(k => k.replace('Mul', '').toUpperCase() + ' x' + e[k]).join(', ') + (e.critAdd ? ', CRIT +' + Math.round(e.critAdd * 100) + '%' : '') + (e.multishotAdd ? ', +1 projectile' : '') + (e.sizeMul ? ', bigger' : '') + (e.aoeMul ? ', splash x' + e.aoeMul : '');
   UI.codex.innerHTML = `<div class="row"><h3 style="margin:0">CODEX</h3><span><button id="replayintro" style="padding:4px 8px;font-size:10px">▶ INTRO COMIC</button> <button id="closecodex">CLOSE</button></span></div>
     <h4>HOW IT WORKS</h4>
-    <div style="font-size:11px;line-height:1.5">Between battles you buy <b>upgrade cards</b> and apply them to a unit, <b>recruit</b> new units (roster cap ${rosterCap()} in this league), and <b>evolve</b> units that have 2 upgrades (LV3). The enemy is generated fresh every round on the league's power curve. Before the fight the oddsmakers simulate the battle ${SIM_RUNS} times and post odds; you bet <b>I WIN</b> or <b>I LOSE</b>. Underdog bets pay big. There is <b style="color:#ff5a3c">no other income</b>: below $50 you must go ALL IN, and if you lose that, <b style="color:#ff5a3c">you're out</b>. Battles that drag past 35s enter <b>SUDDEN DEATH</b>. Every unit charges an <b>ULTIMATE</b> by dealing and taking damage. Units with 3 kills become <b>veterans</b> (+8% stats per 3 kills).</div>
+    <div style="font-size:11px;line-height:1.5">Between battles you buy <b>upgrade cards</b> and apply them to a unit, <b>recruit</b> new units (roster cap ${rosterCap()} in this league), and <b>evolve</b> units that have 2 upgrades (LV3). The enemy is generated fresh every round on the league's power curve. <b style="color:#ff5a3c">Lose a battle and the run is over.</b> Win <b>${L().winsReq === Infinity ? 'forever' : L().winsReq}</b> in this league and you're promoted. Before each fight Griswold simulates it ${SIM_RUNS} times and posts a <b>board</b> of proposition bets about HOW the fight goes: how fast, how clean, who gets the kills, who falls first. You build a <b>slip</b> of up to ${ticketCap()} tickets, each with its own stake and odds. Winning the battle also pays <b>prize money</b> (+$${L().floor} here). Battles that drag past 35s enter <b>SUDDEN DEATH</b>. Every unit charges an <b>ULTIMATE</b> by dealing and taking damage. Units with 3 kills wear a crown.</div>
+    <h4>THE BOARD &amp; YOUR SLIP</h4>
+    <div style="font-size:11px;line-height:1.5">Odds are total return: a $100 ticket at x2.40 pays $240 back. Griswold prices every prop from the sims and keeps a ${Math.round((1 - L().edge) * 100)}% edge in this league. Props that can be decided mid-fight (first blood, a death, a kill chain) <b>cash out the moment they land</b>, coins and all; the rest settle when the last enemy falls. Tickets on a slip that loses the fight are void. From ${esc(LEAGUES[1].name)} you can <b>combine</b> tickets into a <b>PARLAY</b>: odds multiply, one stake, every leg must hit. Consecutive rounds with a profitable slip build a <b>HOT HAND</b> (x1.25, x1.5, x1.75, up to x2 on profits).</div>
+    <div class="cx" style="margin-top:6px">${Object.entries(PROP_CATS).map(([k, c]) => `<div class="cxu" style="border-color:${c.color}55"><b style="color:${c.color}">${c.full}</b><br>${{ tempo: 'QUICK WORK (win under N s), SLOG (over N s), THE WINDOW (ends between A and B s), THE GRIND (reach sudden death), AFTER THE BELL (a death in sudden death), OPENING ACT (first blood inside N s), SLOW START (no death for N s), PHOTO FINISH (last two deaths within 1.5s).', blood: 'FLAWLESS, TIGHT SHIP (lose at most N), EXACT TOLL (lose exactly N), PYRRHIC (lose more than half), LAST ONE STANDING, STRONG FINISH (N+ standing), BLOODBATH (N+ deaths total), WALKING WOUNDED (every survivor below half).', hero: 'One of your units: TOP KILLER, CARRIES (top damage on the field), SURVIVES, FALLS, UNSCATHED (above 75%), CLOSE CALL (below 20% and lives), FIRST TO FALL, VETERAN (3 kills), PACIFIST (no kill), CLOSER (final kill), BIG NUMBERS (N+ damage), PUNCHING BAG (most damage taken), HEAVY HITTER (biggest single hit), SHARPSHOOTER (N+ crits), MEDIC (heals N+), ULTS, DOUBLE ULT.', foe: 'One of theirs: MENACE (kills one of yours), HARMLESS (kills nobody), THEIR STAR (their top killer), OUTLASTS (last of theirs to fall), EARLY EXIT (dies inside 10s), STUBBORN (standing at 20s), SOAKS (most damage taken on the field), ULTS.', first: 'FIRST BLOOD for either side, CRITICAL OPENING (first kill is a crit), OPENING SALVO (an ult before any death), FRONTLINE / BACKLINE FIRST (kind of the first enemy to die), a named unit FALLS FIRST, DRAWS FIRST BLOOD or casts the FIRST ULT.', show: 'DOUBLE / TRIPLE KILL, THEY CHAIN, OVERKILL (a crit ends the fight), FIREWORKS (N+ ults), SILENCED (enemy casts none), DUELING ULTS (both sides cast), DUEL (your X kills their Y), OUTLIVES (your X is up when their Y falls), CROWNED (one of yours reaches 3 kills), SHUTOUT / THEIR BEST (an enemy reaches 2 kills), SHADOW WORK (assassin dashes), SECOND COMING (a resurrection), COLD SNAP / ARSON (freezes, fires).', num: 'CARNAGE / SCRAP (total damage over or under N), HAYMAKER (a single hit of N+), LUCKY STRIKES / DRY SPELL (your crits), BARRAGE (N+ projectiles), FIELD HOSPITAL (heal N+), SHIELD WALL (absorb N+), ULT PARADE (N+ ults both sides), ODD / EVEN BODIES (death count parity).', wild: 'COMEBACK (outnumbered and still win), FULL HEALTH (every survivor above half), NO HEALS, UNTOUCHED (an enemy dies without landing a hit), MELEE DAY / RANGED RULES (who does the killing), SPREAD THE LOVE (everyone scores), SOLO ACT (one unit scores every kill).' }[k]}</div>`).join('')}</div>
     <h4>STRATEGY &amp; MATCHUPS</h4>
-    <div style="font-size:11px;line-height:1.5">The enemy's strength follows the <b>league power curve</b> and climbs every round you stay in a league. Invest in your army and you become the favorite (safe, smaller payouts). Skimp, or <b>bench</b> fighters, and you become the underdog (risky, big payouts). The odds are <b>locked the moment Griswold values you</b> on arrival. Anything you buy or evolve afterwards is invisible to him, unless you <b>bench or unbench</b> a unit: that recalls him, and he re-values the army as it stands (same army, same price), as are your <b>bag</b>, the <b>dice</b> and the <b>chests</b>. That gap is your edge. <b>Sabotage</b> items (Shady Dealer in the shop, or chests when you bet LOSE) let you throw a fight you bet against.</div>
+    <div style="font-size:11px;line-height:1.5">The enemy's strength follows the <b>league power curve</b> and climbs every round you stay in a league. Skimp on the army and the fight itself gets dangerous; over-invest and there's nothing left to stake. The board is <b>posted the moment Griswold prices you</b> on arrival. Anything you buy or evolve afterwards is invisible to him, unless you <b>bench or unbench</b> a unit: that recalls him and he prices the army as it stands (same army, same board). Your <b>bag</b>, the <b>dice</b>, <b>relics</b> and the <b>chests</b> are never priced in. That gap is your edge: buy Haste for the archer after the board is up, then back "ARCHER: TOP KILLER".</div>
     <div style="overflow-x:auto;margin-top:6px"><table style="width:100%;border-collapse:collapse;font-size:11px"><tr><th style="text-align:left;color:#ffd93b;padding:3px 6px">UNIT</th><th style="text-align:left;color:#6aff7a;padding:3px 6px">STRONG AGAINST</th><th style="text-align:left;color:#ff5a3c;padding:3px 6px">WEAK AGAINST</th><th style="text-align:left;color:#8ec5ff;padding:3px 6px">BEST ITEMS</th></tr>
     ${[['KNIGHT', 'archers, bombers, anything it reaches', 'guardian + healer walls, kiting mages', 'Haste Draught, Ward Scroll'], ['ARCHER', 'mages (outranges them), slow tanks', 'knights and assassins that reach it', 'Frost Bomb, Rage Elixir'], ['MAGE', 'clumped melee, low-HP swarms', 'archers, assassins', 'Ult Battery (Meteor!), Hourglass'], ['HEALER', 'burst teams over long fights', 'poison, chain lightning, assassins', 'Ward Scroll, Phoenix Feather'], ['ASSASSIN', 'backline archers, mages, healers', 'guardians, thorns, clumped knights', 'Rage Elixir, Haste Draught'], ['BOMBER', 'clumped melee, tanks (percent damage)', 'fast melee that closes the gap', 'Frost Bomb, Hourglass'], ['GUARDIAN', 'burst and melee (thorns, taunt)', 'bombs, poison, chain lightning', 'Heal Potion, Ward Scroll']].map(r => `<tr><td style="padding:3px 6px"><b>${r[0]}</b></td><td style="padding:3px 6px">${r[1]}</td><td style="padding:3px 6px">${r[2]}</td><td style="padding:3px 6px">${r[3]}</td></tr>`).join('')}</table></div>
     <h4>LEAGUES</h4>
-    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px"><tr><th style="text-align:left;color:#ffd93b;padding:3px 6px">LEAGUE</th><th style="text-align:left;color:#ffd93b;padding:3px 6px">RIGHT BETS TO ADVANCE</th><th style="text-align:left;color:#ffd93b;padding:3px 6px">ROSTER</th><th style="text-align:left;color:#ffd93b;padding:3px 6px">CARDS</th><th style="text-align:left;color:#ffd93b;padding:3px 6px">PAYOUT</th><th style="text-align:left;color:#ffd93b;padding:3px 6px">WIN FLOOR</th><th style="text-align:left;color:#ffd93b;padding:3px 6px">MAX CHIP</th><th style="text-align:left;color:#ffd93b;padding:3px 6px">PERKS</th></tr>
-    ${LEAGUES.map((l, i) => `<tr style="opacity:${i === league ? 1 : .7};background:${i === league ? 'rgba(255,255,255,.06)' : 'none'}"><td style="padding:3px 6px"><b style="color:${l.color}">${i + 1}. ${esc(l.name)}</b><br><span class="muted">${l.tier}${i === league ? ' · YOU ARE HERE' : ''}</span></td><td style="padding:3px 6px">${l.winsReq === Infinity ? 'endless' : l.winsReq}</td><td style="padding:3px 6px">${l.roster}</td><td style="padding:3px 6px">${l.cards}</td><td style="padding:3px 6px">${Math.round(l.edge * 100)}%</td><td style="padding:3px 6px">+$${l.floor}</td><td style="padding:3px 6px">$${l.chips[l.chips.length - 1]}</td><td style="padding:3px 6px">${esc(l.perk)}</td></tr>`).join('')}</table></div>
-    <div class="muted" style="font-size:10px;margin-top:4px">Promotion is automatic and free: get the required number of bets RIGHT in your current league (battle results themselves don't matter) and the next round opens in the league above, with a ceremony and a free relic from Mirella. Payout % is how much of a fair bet the house returns; higher leagues take a smaller cut. On top of that every winning bet is boosted x1.6, consecutive correct bets build a streak multiplier (x1.5, x2, up to x3), and a correct <b>I WIN</b> bet always pays at least the league's <b>win floor</b>, no matter how short the odds. Betting LOSE gives that guarantee up.</div>
+    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px"><tr>${['LEAGUE', 'WINS TO ADVANCE', 'ROSTER', 'CARDS', 'BOARD', 'TICKETS', 'PARLAY', 'HOUSE EDGE', 'PRIZE MONEY', 'MAX CHIP', 'PERKS'].map(h => `<th style="text-align:left;color:#ffd93b;padding:3px 6px">${h}</th>`).join('')}</tr>
+    ${LEAGUES.map((l, i) => `<tr style="opacity:${i === league ? 1 : .7};background:${i === league ? 'rgba(255,255,255,.06)' : 'none'}"><td style="padding:3px 6px"><b style="color:${l.color}">${i + 1}. ${esc(l.name)}</b><br><span class="muted">${l.tier}${i === league ? ' · YOU ARE HERE' : ''}</span></td><td style="padding:3px 6px">${l.winsReq === Infinity ? 'endless' : l.winsReq}</td><td style="padding:3px 6px">${l.roster}</td><td style="padding:3px 6px">${l.cards}</td><td style="padding:3px 6px">${l.board}</td><td style="padding:3px 6px">${l.tickets}</td><td style="padding:3px 6px">${l.parlay ? l.parlay + ' legs' : 'no'}</td><td style="padding:3px 6px">${Math.round((1 - l.edge) * 100)}%</td><td style="padding:3px 6px">+$${l.floor}</td><td style="padding:3px 6px">$${l.chips[l.chips.length - 1]}</td><td style="padding:3px 6px">${esc(l.perk)}</td></tr>`).join('')}</table></div>
+    <div class="muted" style="font-size:10px;margin-top:4px">Promotion is automatic and free: win the required number of battles in your current league and the next round opens in the league above, with a ceremony and a free relic from Mirella. House edge is the cut Griswold keeps on every prop; higher leagues take less. Prize money is paid for every battle you win.</div>
     <h4>DICE &amp; MODIFIERS</h4>
-    <div style="font-size:11px;line-height:1.5">After you lock your bet, you roll <b>${diceCount()}</b> ${diceCount() === 1 ? 'die' : 'dice'} in this league (1 in Wood, 2 in Bronze/Silver, 3 from Gold up). Each die: <b style="color:#ff5a3c">1-2</b> gives the enemy a buff, <b style="color:#ffd93b">3-4</b> unleashes chaos on the whole field, <b style="color:#6aff7a">5-6</b> buffs your side. Modifiers last one battle. The posted odds don't know the dice.</div>
+    <div style="font-size:11px;line-height:1.5">After you lock your slip, you roll <b>${diceCount()}</b> ${diceCount() === 1 ? 'die' : 'dice'} in this league (1 in Wood, 2 in Bronze/Silver, 3 from Gold up). Each die: <b style="color:#ff5a3c">1-2</b> gives the enemy a buff, <b style="color:#ffd93b">3-4</b> unleashes chaos on the whole field, <b style="color:#6aff7a">5-6</b> buffs your side. Modifiers last one battle. The board was priced before the dice were rolled.</div>
     <div style="margin:6px 0 2px;color:#8ec5ff;font-weight:900;letter-spacing:2px;font-size:11px">TEAM BUFFS (good or bad for you depending on the roll)</div><div class="cx">${BUFFS.map(b => `<div class="cxu"><b>${esc(b.name)}</b><br>${esc(b.desc)}</div>`).join('')}</div>
     <div style="margin:6px 0 2px;color:#ffd93b;font-weight:900;letter-spacing:2px;font-size:11px">CHAOS</div><div class="cx">${CHAOS.map(b => `<div class="cxu" style="border-color:#ffd93b55"><b style="color:#ffd93b">${esc(b.name)}</b><br>${esc(b.desc)}</div>`).join('')}</div>
     <h4>RELICS (MIRELLA THE PEDDLER)</h4>
-    <div style="font-size:11px;line-height:1.5">Every time you advance a league you meet Mirella, who deals you three <b>permanent relics</b> face down. Pick one, free. They work in battle, after Griswold has locked the odds, so he never prices them in.</div>
+    <div style="font-size:11px;line-height:1.5">Every time you advance a league you meet Mirella, who deals you three <b>permanent relics</b> face down. Pick one, free. They work in battle and on your slip, after Griswold has posted the board, so he never prices them in.</div>
     <div class="cx" style="margin-top:6px">${RELICS.map(r => `<div class="cxu" style="border-color:${perkLv(r.id) ? '#ffd93b' : '#3a3260'}"><span style="font-size:18px">${r.icon}</span> <b>${esc(r.name)}</b> <span class="muted">max ${r.max}${perkLv(r.id) ? ' · owned LV' + perkLv(r.id) : ''}</span><br>${esc(r.desc)}</div>`).join('')}</div>
     <h4>CHESTS &amp; CONSUMABLES</h4>
     <div style="font-size:11px;line-height:1.5">During every battle <b>${2 + Math.floor(league / 2)} chests</b> fall onto the field. Tap one to crack it open at once (it opens by itself after a few seconds). Each holds a consumable that flies into your bag (${invMax()} slots, carried between rounds; extras are sold). Use consumables mid-fight by <b>dragging</b> them from your bag onto the battlefield: team items highlight everyone they will affect, aimed items show their blast radius, and releasing off the field cancels. A quick tap or keys 1-4 also work as a shortcut.</div>
@@ -2122,15 +2559,15 @@ function renderCodex() {
 }
 function renderLB() {
   const list = lbLoad();
-  const row = (e, i, cols) => `<tr class="${e.id === lastRunId ? 'me' : ''}"><td>${i + 1}</td><td><b>${esc(e.name)}</b></td>${cols.map(c => `<td>${c(e)}</td>`).join('')}<td class="muted">${e.date} · ${e.reason === 'cashout' ? 'cashed out' : 'busted'}</td></tr>`;
+  const row = (e, i, cols) => `<tr class="${e.id === lastRunId ? 'me' : ''}"><td>${i + 1}</td><td><b>${esc(e.name)}</b></td>${cols.map(c => `<td>${c(e)}</td>`).join('')}<td class="muted">${e.date} · ${e.reason === 'cashout' ? 'cashed out' : e.reason === 'defeat' ? 'fell in battle' : 'busted'}</td></tr>`;
   const table = (title, sorted, heads, cols) => `<h4 style="margin:12px 0 4px;color:#8ec5ff;letter-spacing:2px;font-size:12px">${title}</h4><div style="overflow-x:auto"><table><tr><th>#</th><th>NAME</th>${heads.map(h => `<th>${h}</th>`).join('')}<th></th></tr>${sorted.slice(0, 8).map((e, i) => row(e, i, cols)).join('') || '<tr><td colspan="9" class="muted">no runs yet</td></tr>'}</table></div>`;
   const lg = e => `<b style="color:${LEAGUES[e.league].color}">${esc(e.leagueName)}</b>`;
   UI.lb.innerHTML = `<div class="row"><h3 style="margin:0">LEADERBOARDS <span class="muted" style="font-size:10px">local · this browser</span></h3><button id="closelb">CLOSE</button></div>
     <div class="row" style="margin-top:6px;flex-wrap:wrap;gap:6px"><span class="muted">your name</span><input class="nm" id="lbname" maxlength="10" value="${esc(playerName())}"><button id="savename" style="padding:6px 10px;font-size:11px">SAVE</button><span class="muted" style="font-size:10px">${lastRunId ? 'renames your latest run too' : ''}</span></div>
-    ${table('FARTHEST', list.slice().sort((a, b) => b.league - a.league || b.rounds - a.rounds || b.peak - a.peak), ['LEAGUE', 'ROUNDS', 'BETS R-W', 'PEAK GOLD'], [lg, e => e.rounds, e => e.wins + '-' + e.losses, e => '$' + e.peak])}
+    ${table('FARTHEST', list.slice().sort((a, b) => b.league - a.league || b.rounds - a.rounds || b.peak - a.peak), ['LEAGUE', 'ROUNDS', 'TICKETS W-L', 'PEAK GOLD'], [lg, e => e.rounds, e => e.wins + '-' + e.losses, e => '$' + e.peak])}
     ${table('RICHEST', list.slice().sort((a, b) => b.peak - a.peak || b.won - a.won), ['PEAK GOLD', 'TOTAL WON', 'LEAGUE', 'ROUNDS'], [e => '$' + e.peak, e => '$' + e.won, lg, e => e.rounds])}
-    ${table('BIGGEST SINGLE BET', list.slice().filter(e => e.biggest > 0).sort((a, b) => b.biggest - a.biggest), ['WON', 'LEAGUE', 'ROUNDS', 'PEAK GOLD'], [e => '+$' + e.biggest, lg, e => e.rounds, e => '$' + e.peak])}
-    <div class="muted" style="font-size:10px;margin-top:8px">Runs are recorded when you bust or CASH OUT from the Army panel. ${list.length ? `<button id="clearlb" style="padding:3px 8px;font-size:10px;margin-left:8px">CLEAR ALL</button>` : ''}</div>`;
+    ${table('BIGGEST TICKET', list.slice().filter(e => e.biggest > 0).sort((a, b) => b.biggest - a.biggest), ['WON', 'LEAGUE', 'ROUNDS', 'PEAK GOLD'], [e => '+$' + e.biggest, lg, e => e.rounds, e => '$' + e.peak])}
+    <div class="muted" style="font-size:10px;margin-top:8px">Runs are recorded when your army falls or you CASH OUT from the Army panel. ${list.length ? `<button id="clearlb" style="padding:3px 8px;font-size:10px;margin-left:8px">CLEAR ALL</button>` : ''}</div>`;
   $('closelb').onclick = () => { lbOpen = false; if (tab === 'boards') tab = 'bet'; renderUI(); };
   $('savename').onclick = () => { setPlayerName($('lbname').value); renderLB(); SFX.buy(); };
   const cl = $('clearlb'); if (cl) cl.onclick = () => { if (cl.dataset.arm) { lbSave([]); lastRunId = null; renderLB(); } else { cl.dataset.arm = '1'; cl.textContent = 'REALLY CLEAR?'; } };
@@ -2229,13 +2666,18 @@ function renderHeroCard() {
     return;
   }
   el.classList.remove('free');
-  const zoom = 1 + zoomPunch * 0.035, sx = (u.x - W / 2) * zoom + W / 2, top = (headY(u) - 14 - H / 2) * zoom + H / 2;
+  placeHeroCard(u, el, w, h);
+}
+// the card points at the unit's head on screen, so it follows the camera and a unit being dragged
+function placeHeroCard(u, el, w, h) {
+  const hd = worldToScreen(u.x, headY(u) - 14), ft = worldToScreen(u.x, u.y + 14), sx = hd.x, top = hd.y;
   const below = top - h < 8;
   el.classList.toggle('below', below);
   el.style.left = clamp(sx, w / 2 + 6, W - w / 2 - 6) + 'px';
   // the card carries the whole unit now, so it is tall enough to run off an edge
-  el.style.top = (below ? clamp(u.y + 14, 8, Math.max(8, H - h - 8)) : clamp(top, h + 8, H - 8)) + 'px';
+  el.style.top = (below ? clamp(ft.y, 8, Math.max(8, H - h - 8)) : clamp(top, h + 8, H - 8)) + 'px';
 }
+function trackHeroCard() { const u = selected, el = $('hcard'); if (!u || el.hidden || phase !== 'prep' || (u.team.id === 0 && u.benched)) return; const r = el.getBoundingClientRect(); placeHeroCard(u, el, r.width || 250, r.height || 160); }
 // ---------- debug travel ----------
 let debugOpen = false;
 function travelToLeague(i) {
@@ -2270,7 +2712,7 @@ $('mutetop').onclick = () => { audioInit(); setMuted(!muted); renderUI(); };
 setMuted(muted);
 function renderBattleBar() { const mods = rolledMods.map(m => `<span class="modchip" style="color:${m.color};border-color:${m.color}" data-tip="<b>${esc(m.def.name)}</b> · ${m.who}<br>${esc(m.def.desc)}">${esc(m.def.name)}${m.team === 0 ? ' ▲' : m.team === 1 ? ' ▼' : ''}</span>`).join(' '); UI.battlebar.innerHTML = (mods ? `<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center;margin-right:8px"><span class="muted" style="font-size:10px">MODS</span>${mods}</div>` : '') + `<button id="statsbtn" class="${statsOpen ? 'sel' : ''}">STATS</button><button id="spd">SPEED x${speed}</button><button id="mutebtn">${muted ? '🔇' : '🔊'}</button>`; $('statsbtn').onclick = () => { statsOpen = !statsOpen; renderUI(); }; $('spd').onclick = () => { speed = speed === 1 ? 2 : speed === 2 ? 3 : 1; renderBattleBar(); }; $('mutebtn').onclick = () => { setMuted(!muted); renderBattleBar(); }; }
 function renderUI() {
-  const prep = phase === 'prep', merchant = phase === 'merchant', dicePhase = phase === 'dice', battle = phase === 'battle' || phase === 'ending', result = phase === 'result' && !(lastResult && lastResult.busted), over = phase === 'result' && lastResult && lastResult.busted;
+  const prep = phase === 'prep', merchant = phase === 'merchant', dicePhase = phase === 'dice', battle = phase === 'battle' || phase === 'ending', over = phase === 'result' && lastResult && lastResult.over, result = phase === 'result' && !over;
   if (codexOpen && tab !== 'codex' && MOBILE && prep) tab = 'codex';
   if (lbOpen && tab !== 'boards' && MOBILE && prep) tab = 'boards';
   if (MOBILE && prep) { UI.left.hidden = tab !== 'army'; UI.shop.hidden = tab !== 'shop'; UI.right.hidden = tab !== 'bet'; codexOpen = tab === 'codex'; lbOpen = tab === 'boards'; }
@@ -2280,7 +2722,7 @@ function renderUI() {
   UI.battlebar.hidden = !battle; UI.result.hidden = !result || lbOpen; UI.gameover.hidden = !over || lbOpen; UI.stats.hidden = !statsOpen; UI.codex.hidden = !codexOpen; UI.lb.hidden = !lbOpen;
   if (!codexOpen) previews.clear();
   const tabs = $('tabs'); tabs.style.display = MOBILE && prep ? 'flex' : 'none';
-  document.body.classList.toggle('tabs', MOBILE && prep); document.body.classList.toggle('prep', prep);
+  document.body.classList.toggle('tabs', MOBILE && prep); document.body.classList.toggle('prep', prep); document.body.classList.toggle('zoomtab', camZoomTab());
   if (MOBILE && prep) tabs.querySelectorAll('button').forEach(b => b.classList.toggle('sel', b.dataset.tab === tab));
   if (prep) { renderShop(); renderBet(); renderUnitPanel(); }
   if (battle) renderBattleBar();
@@ -2289,7 +2731,7 @@ function renderUI() {
   if (statsOpen) renderStats();
   if (codexOpen) renderCodex();
   if (lbOpen) renderLB();
-  renderHeroCard(); renderInv(); renderDebug();
+  renderHeroCard(); renderInv(); renderSlipBox(); renderDebug();
 }
 // ---------- input ----------
 canvas.addEventListener('pointermove', e => { aimPos = { x: e.clientX, y: e.clientY }; });
@@ -2315,12 +2757,54 @@ canvas.addEventListener('pointerdown', e => {
     return;
   }
   if (phase !== 'prep') return;
-  const mx = e.clientX, my = e.clientY;
-  let hit = null, bd = 1e9;
-  for (const u of units) { const w = unitW(u), h = unitH(u); if (mx > u.x - w / 2 - 6 && mx < u.x + w / 2 + 6 && my > u.y - h - 10 && my < u.y + 8) { const d = dist(mx, my, u.x, u.y - h / 2); if (d < bd) { bd = d; hit = u; } } }
+  const hit = unitAtScreen(e.clientX, e.clientY);
   if (targeting) { if (hit && hit.team.id === 0) applyCardTo(hit); else { toast('PICK ONE OF YOUR UNITS (ESC TO CANCEL)'); } return; }
+  // your own units are picked up on press: a short press is a tap (select), a move is a drag (reposition)
+  if (hit && hit.team.id === 0) { beginUnitDrag(hit, e.clientX, e.clientY); if (canvas.setPointerCapture && e.pointerId !== undefined) { try { canvas.setPointerCapture(e.pointerId); } catch (err) { } } return; }
   selected = hit; renderUI(); if (hit) SFX.buy();
 });
+function unitAtScreen(sx, sy) {
+  const p = screenToWorld(sx, sy), slack = 6 / camZ();
+  let hit = null, bd = 1e9;
+  for (const u of units) { const w = unitW(u), h = unitH(u); if (p.x > u.x - w / 2 - slack && p.x < u.x + w / 2 + slack && p.y > u.y - h - 10 && p.y < u.y + 8) { const d = dist(p.x, p.y, u.x, u.y - h / 2); if (d < bd) { bd = d; hit = u; } } }
+  return hit;
+}
+// ---------- formation: drag your units around before the fight ----------
+// A dragged unit keeps a slot (fractions of your half of the field) so layoutTeam puts it back there
+// after resizes, benching and every new round. Dropping onto a teammate swaps the two.
+let unitDrag = null;
+const DRAG_X_MAX = () => W * 0.46;
+function beginUnitDrag(u, sx, sy) { const p = screenToWorld(sx, sy); unitDrag = { u, x0: sx, y0: sy, ox: u.x, oy: u.y, gx: p.x - u.x, gy: p.y - u.y, moved: false, swap: null }; }
+function moveUnitDrag(sx, sy) {
+  const d = unitDrag; if (!d) return;
+  if (!d.moved && Math.hypot(sx - d.x0, sy - d.y0) < 7 * (MOBILE ? 1.4 : 1)) return;
+  if (!d.moved) { d.moved = true; hideTip(); if (MOBILE) { const el = $('hcard'); if (el) el.hidden = true; } }
+  const p = screenToWorld(sx, sy), u = d.u;
+  u.x = clamp(p.x - d.gx, 24, DRAG_X_MAX()); u.y = clamp(p.y - d.gy, FIELD_TOP, FIELD_BOTTOM); u.face = 1; u.popScale = Math.max(u.popScale, 0.35);
+  let best = null, bd = 34; for (const o of units) { if (o === u || o.team.id !== 0 || o.dead) continue; const dd = dist(u.x, u.y, o.x, o.y); if (dd < bd) { bd = dd; best = o; } }
+  d.swap = best;
+  if (Math.random() < 0.5) dust(u.x, u.y, 1, 30);
+}
+function slotOf(u) { return { fx: clamp((u.x - 24) / Math.max(1, DRAG_X_MAX() - 24), 0, 1), fy: clamp((u.y - FIELD_TOP) / Math.max(1, FIELD_BOTTOM - FIELD_TOP), 0, 1) }; }
+function endUnitDrag(cancel) {
+  const d = unitDrag; if (!d) return; unitDrag = null; const u = d.u;
+  if (!d.moved) { selected = selected === u ? null : u; renderUI(); if (selected) SFX.buy(); return; }
+  if (cancel) { u.x = d.ox; u.y = d.oy; renderUI(); return; }
+  if (d.swap) { const o = d.swap; o.x = d.ox; o.y = d.oy; o.slot = slotOf(o); o.popScale = 0.6; dust(o.x, o.y, 8, 80); ring(o.x, o.y, 24, '#8ec5ff', 0.35, 3); }
+  u.slot = slotOf(u); u.popScale = 0.6; dust(u.x, u.y, 10, 100); ring(u.x, u.y, 28, '#ffd93b', 0.4, 3); SFX.land();
+  if (d.swap) toast(u.def.name + ' AND ' + d.swap.def.name + ' SWAP PLACES'); else if (oddsLocked) toast(u.def.name + ' MOVED · THE BOARD WAS PRICED ON THE OLD FORMATION');
+  scheduleOdds(); renderUI();
+}
+function drawDragZone() {
+  const d = unitDrag; if (!d || !d.moved) return;
+  ctx.save(); ctx.globalAlpha = 0.09; ctx.fillStyle = '#8ec5ff'; ctx.fillRect(0, FIELD_TOP - 30, DRAG_X_MAX(), FIELD_BOTTOM - FIELD_TOP + 40); ctx.globalAlpha = 0.6; ctx.strokeStyle = '#8ec5ff'; ctx.lineWidth = 2; ctx.setLineDash([8, 6]); ctx.lineDashOffset = -realTime * 40; ctx.strokeRect(1, FIELD_TOP - 30, DRAG_X_MAX() - 1, FIELD_BOTTOM - FIELD_TOP + 40); ctx.setLineDash([]);
+  const u = d.u; ctx.globalAlpha = 0.5; ctx.strokeStyle = d.swap ? '#ffd93b' : '#fff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(u.x, u.y + 2, unitW(u) * 0.7, unitW(u) * 0.26, 0, 0, TAU); ctx.stroke();
+  if (d.swap) { const o = d.swap; ctx.strokeStyle = '#ffd93b'; ctx.globalAlpha = 0.6 + Math.sin(realTime * 12) * 0.3; ctx.beginPath(); ctx.ellipse(o.x, o.y + 2, unitW(o) * 0.7, unitW(o) * 0.26, 0, 0, TAU); ctx.stroke(); }
+  ctx.restore();
+}
+window.addEventListener('pointermove', e => { if (unitDrag) moveUnitDrag(e.clientX, e.clientY); });
+window.addEventListener('pointerup', () => { if (unitDrag) endUnitDrag(false); });
+window.addEventListener('pointercancel', () => { if (unitDrag) endUnitDrag(true); });
 $('tabs').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { tab = b.dataset.tab; codexOpen = tab === 'codex'; lbOpen = tab === 'boards'; renderUI(); }));
 window.addEventListener('keydown', e => {
   if (e.code === 'Tab') { e.preventDefault(); if (phase !== 'prep') { statsOpen = !statsOpen; renderUI(); } }
@@ -2405,7 +2889,7 @@ const SCENES = [
   },
   { // 1 Griswold house rules
     draw() { tavern(); minis(); griswold(W * 0.5, H * 0.66, 7, sceneT > 0.5 && sceneT < 5); }, enter() { camTo = { x: 0, y: 0, z: 1 }; },
-    beats: [[0.5, () => bubble("Welcome. Sit. Don't touch the miniatures.", { left: '560px', top: '110px' }, '40px')], [2.0, () => bubble('House rules: I price your army.', { left: '140px', top: '80px' }, '240px')], [3.2, () => bubble('You bet.', { left: '200px', top: '190px' }, '200px')], [4.2, () => bubble('The miniatures do the rest.', { left: '560px', top: '230px' }, '60px')]],
+    beats: [[0.5, () => bubble("Welcome. Sit. Don't touch the miniatures.", { left: '560px', top: '110px' }, '40px')], [2.0, () => bubble('House rules: I price the fight.', { left: '140px', top: '80px' }, '240px')], [3.2, () => bubble("Don't tell me you'll win. Tell me HOW.", { left: '200px', top: '190px', maxWidth: '260px' }, '200px')], [4.2, () => bubble('The miniatures do the rest.', { left: '560px', top: '230px' }, '60px')]],
   },
   { // 2 knight objects
     draw() { tavern(); minis(false); spr('knight', B, W * 0.24, H * 0.9, 3); }, enter() { camTo = { x: -W * 0.24, y: H * 0.36, z: PORTRAIT ? 2.4 : 3.2 }; },
@@ -2454,7 +2938,7 @@ document.getElementById('intro_cta').onclick = e => { e.stopPropagation(); finis
 }
 // ---------- loop & init ----------
 let last = performance.now();
-function frame(now) { let dt = (now - last) / 1000; last = now; dt = Math.min(dt, 0.05); update(dt); paintBackground(realTime); render(); if (phase === 'prep' && !UI.right.hidden) drawBookie(); if (phase === 'merchant') drawPeddler(); if (codexOpen) updatePreviews(dt); if (phase === 'prep') stepSims(10); requestAnimationFrame(frame); }
+function frame(now) { let dt = (now - last) / 1000; last = now; dt = Math.min(dt, 0.05); update(dt); camStep(dt); paintBackground(realTime); render(); if (phase === 'prep') trackHeroCard(); if (phase === 'prep' && !UI.right.hidden) drawBookie(); if (phase === 'merchant') drawPeddler(); if (codexOpen) updatePreviews(dt); if (phase === 'prep') stepSims(10); requestAnimationFrame(frame); }
 resize();
 for (const t of ['knight', 'knight', 'archer', 'mage']) roster.push(spawnUnit(0, t, W * 0.25, H / 2, false));
 if (introSeen()) { startPrep(); banner('PIXEL CLASH', '#ffd93b', { color2: '#fff', scale: S * 3, life: 2.2, sub: 'BUILD YOUR ARMY. PLACE YOUR BET. WATCH IT BURN.', subColor: '#fff' }); }
