@@ -141,6 +141,12 @@
   #slipbox .trow.hit .st { color:#7dff8a; } #slipbox .trow.bust .st { color:#ff5a3c; }
   #slipbox .trow.bust .tn { text-decoration:line-through; opacity:.6; }
   #slipbox .trow.flash .st { animation:stamp .3s cubic-bezier(.2,1.6,.4,1); }
+  #slipbox .trow { flex-wrap:wrap; cursor:default; }
+  #slipbox .trow .td { flex:1 1 100%; display:none; font-size:10px; line-height:1.35; color:rgba(255,255,255,.75); padding:2px 0 2px 53px; text-decoration:none; }
+  #slipbox .trow .td b { color:#ffd93b; } #slipbox .trow .td .lg { display:block; }
+  #slipbox .trow:hover .td, #slipbox .trow.open .td { display:block; }
+  #slipbox .hint { font-size:9px; color:rgba(255,255,255,.4); margin-top:3px; }
+  .settle td small.legs { display:block; font-size:10px; color:rgba(255,255,255,.55); font-weight:normal; }
   #slipbox .trow.flash { animation:flash .5s; }
   @keyframes stamp { from { transform:scale(2.4) rotate(-22deg); opacity:0; } to { transform:scale(1) rotate(-6deg); opacity:1; } }
   .mobile #slipbox { left:6px; top:44px; width:min(46vw, 210px); font-size:10px; padding:5px 7px; }
@@ -399,6 +405,10 @@ function measurePanels() {
 function camTarget() {
   const id = camIdentity();
   if (unitDrag) return { x: cam.x, y: cam.y, z: cam.z, px: cam.px, py: cam.py };
+  if (phase === 'ending' && lastBlow) {
+    const z = MOBILE ? 1.5 : 1.7, px = W / 2, py = MOBILE ? H * 0.42 : H * 0.46;
+    return { x: clamp(lastBlow.x, px / z, W - (W - px) / z), y: clamp(lastBlow.y, py / z, H - (H - py) / z), z, px, py };
+  }
   if (!camZoomTab() && !camDesktopFocus()) return id;
   const list = units.filter(u => u.team.id === 0 && !u.dead); if (!list.length) return id;
   let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
@@ -1202,9 +1212,10 @@ function kill(u, killer, crit = false) {
   if (perkLv('robber') && killer.team.id === 0 && !SIM && u.team.id === 1) { const g = 3 * perkLv('robber'); gold += g; peakGold = Math.max(peakGold, gold); awardGold(g, u.x, u.y - 30, { quiet: true }); }
   if (goldRush && killer.team.id === 0 && !SIM) { gold += 4; goldRushTotal += 4; peakGold = Math.max(peakGold, gold); awardGold(4, u.x, u.y - 30, { quiet: true }); dmgText(u.x, headY(u) - 30, '+$4', '#ffd93b', { scale: S * 1.1, color2: '#fff', vy: 200 }); }
   u.dead = true; u.deathT = 0; u.hp = 0; u.ultReady = false; u.ult = 0;
-  u.deathDir = Math.sign(u.x - killer.x) || 1;
+  u.deathDir = Math.sign(u.x - (killer.x !== undefined ? killer.x : u.x - 1)) || 1;
   u.team.graveyard.push(u);
   const team = killer.team, cx = u.x, cy = u.y - unitH(u) / 2;
+  if (!SIM && phase === 'battle' && !lastBlow && u.team.id >= 0 && alive(u.team).length === 0) killingBlow(u, killer);
   if (battleLog) { battleLog.deaths.push({ id: u.id, team: u.team.id, killer: killer.id || 'field', killerTeam: team.id, t: battleTime, crit: !!crit, temp: !!u.temp }); if (killer.id) battleLog.kills[killer.id] = (battleLog.kills[killer.id] || 0) + 1; }
   burstPixels(cx, cy, [u.team.P, u.team.S, u.team.p, PAL.F, PAL.K], 34, 300, S);
   confetti(cx, cy, 26, 360); coins(cx, u.y, ri(3, 6)); smoke(cx, cy, 5);
@@ -1224,6 +1235,20 @@ function kill(u, killer, crit = false) {
     if (i >= 1) { slowmo = Math.max(slowmo, 0.45 + i * 0.1); addTrauma(0.3); }
     if (i >= 2) { confetti(W / 2, H * 0.3, 40, 500); addFlash(0.2, team.S); }
   }
+}
+function killingBlow(u, killer) {
+  const kx = killer.x !== undefined ? killer.x : u.x, ky = killer.y !== undefined ? killer.y : u.y;
+  lastBlow = { victim: u, killer, x: (u.x + kx) / 2, y: (u.y + ky) / 2 - unitH(u) / 2 };
+  blowT = 1.6;
+  // the body is launched away from the blow and keeps sliding while dead (updateUnit integrates kb for corpses)
+  const dir = u.deathDir, mass = u.sizeMul * u.sizeMul;
+  u.kb.x = dir * 520 / mass; u.kb.y = rand(-90, -40) / mass; u.flying = 0.9;
+  for (const o of units) if (o !== u && o.dead && o.deathT < 1) { o.kb.x += Math.sign(o.x - u.x || 1) * 160; o.kb.y += rand(-40, 40); o.flying = Math.max(o.flying || 0, 0.6); }
+  addHitstop(0.22); addFlash(0.55, '#fff'); addTrauma(1.1); zoomPunch = 1.6;
+  shockwave(u.x, u.y, 120 * u.sizeMul, '#fff'); impactStar(u.x, u.y - unitH(u) / 2, '#fff', 60, 0.5); burstPixels(u.x, u.y - unitH(u) / 2, [u.team.P, u.team.S, PAL.F, '#fff'], 40, 420, S * 1.2); confetti(u.x, u.y - 20, 40, 480);
+  const kn = killer.def ? unitTag(killer) : 'THE FIELD', vn = unitTag(u), theirs = u.team.id === 1;
+  banner('KILLING BLOW', theirs ? '#ffd93b' : '#ff5a3c', { color2: '#fff', scale: S * 3, life: 2.4, shake: 1, y: H * 0.22, sub: (theirs ? kn + ' FINISHES THEIR ' + vn : 'THEIR ' + kn + ' FINISHES ' + vn), subColor: '#fff' });
+  SFX.crit(); SFX.bigboom();
 }
 function handWorld(u) { const hh = SPRITES[u.def.sprite].hand; return { x: u.x + u.face * (hh[0] - 6.5) * S * u.sizeMul, y: u.y - unitH(u) + hh[1] * S * u.sizeMul }; }
 
@@ -1831,8 +1856,11 @@ function renderSlipBox() {
     const st = t.status;
     const val = st === 'hit' ? '+$' + t.paid : st === 'bust' ? (t.paid + t.stake > 0 ? '$' + (t.paid + t.stake) + ' back' : '-$' + t.stake) : (t.legs.length > 1 ? t.legs.map(l => l.status === 'hit' ? '●' : l.status === 'bust' ? '✕' : '○').join('') : (t.legs[0].show ? t.legs[0].show(battleLog) : ''));
     const fl = t.flashed !== st; t.flashed = st;
-    return `<div class="trow ${st} ${fl ? 'flash' : ''}" data-i="${i}"><span class="st">${st === 'hit' ? '■ HIT' : st === 'bust' ? '✕ BUST' : '● LIVE'}</span><span class="tn">${esc(t.legs.map(l => l.title).join(' + '))}</span><span class="tv">${esc(val)}</span></div>`;
-  }).join('');
+    const legs = t.legs.map(l => `<span class="lg">${l.status === 'hit' ? '■' : l.status === 'bust' ? '✕' : '○'} <b>${esc(l.title)}</b> · ${esc(l.desc)} · x${l.odds.toFixed(2)}</span>`).join('');
+    const detail = `<span class="td">${legs}<span class="lg">stake <b>$${t.stake}</b> · x${ticketOdds(t).toFixed(2)} · ${st === 'hit' ? 'paid <b>+$' + t.paid + '</b>' : st === 'bust' ? 'lost' : 'to win <b>+$' + ticketProfit(t) + '</b>'}${hotStreak > 0 && st === 'live' ? ' · hot hand x' + hotHand().toFixed(2) : ''}</span></span>`;
+    return `<div class="trow ${st} ${fl ? 'flash' : ''} ${t.open ? 'open' : ''}" data-i="${i}"><span class="st">${st === 'hit' ? '■ HIT' : st === 'bust' ? '✕ BUST' : '● LIVE'}</span><span class="tn">${esc(t.legs.map(l => l.title).join(' + '))}</span><span class="tv">${esc(val)}</span>${detail}</div>`;
+  }).join('') + `<div class="hint">${MOBILE ? 'tap a ticket for the full bet' : 'hover a ticket for the full bet'}</div>`;
+  el.querySelectorAll('.trow').forEach(r => r.onclick = () => { const t = slip[+r.dataset.i]; if (t) { t.open = !t.open; renderSlipBox(); } });
 }
 
 // ---------- enemy generation ----------
@@ -1972,7 +2000,7 @@ function beginBattle() {
 }
 function launchBattle() {
   if (phase !== 'vs') return;
-  phase = 'battle'; battleTime = 0; winner = null; suddenDeath = false; sdTick = 0; dice = []; diceIdle = 0; paused = false;
+  phase = 'battle'; battleTime = 0; winner = null; suddenDeath = false; sdTick = 0; dice = []; diceIdle = 0; paused = false; lastBlow = null; blowT = 0;
   for (const u of units) { u.kb.x = u.kb.y = 0; u.landed = true; u.auraT = 0; }
   battleEvents.sort((a, b) => a.t - b.t); planChests(); useAim = null;
   banner('FIGHT!', '#ffd93b', { color2: '#fff', scale: S * 3.4, life: 1.4, shake: 1 });
@@ -1980,7 +2008,7 @@ function launchBattle() {
   renderUI();
 }
 function endBattle() {
-  paused = false;
+  paused = false; blowT = 0;
   phase = 'result'; finalizeLog();
   const won = winner === TEAMS[0], mods = rolledMods.map(m => m.def.name + (m.team === 0 ? ' (you)' : m.team === 1 ? ' (enemy)' : ''));
   if (!won) {
@@ -2022,7 +2050,7 @@ function pickHealTarget(u) {
   return best;
 }
 function updateUnit(u, dt) {
-  if (u.dead) { u.deathT += dt; return; }
+  if (u.dead) { u.deathT += dt; if (u.flying > 0) { u.flying -= dt; u.x = clamp(u.x + u.kb.x * dt, 10, W - 10); u.y = clamp(u.y + u.kb.y * dt, FIELD_TOP - 40, FIELD_BOTTOM + 30); u.kb.x *= Math.pow(0.02, dt); u.kb.y *= Math.pow(0.02, dt); if (Math.random() < dt * 30) dust(u.x, u.y, 1, 40); } return; }
   u.t += dt;
   u.flash = Math.max(0, u.flash - dt); u.squash = Math.max(0, u.squash - dt * 6); u.popScale = Math.max(0, u.popScale - dt * 3);
   u.lunge *= Math.pow(0.001, dt); u.spinT = Math.max(0, u.spinT - dt); u.castT = Math.max(0, u.castT - dt);
@@ -2089,12 +2117,16 @@ function updateUnit(u, dt) {
 
 // ---------- main update ----------
 let statsTick = 0, slipTick = 0, suddenDeath = false, sdTick = 0;
+// THE KILLING BLOW: the death that ends the fight. Time crawls, the camera closes in on killer and victim,
+// the body is launched, and a banner names the pair. lastBlow is set by kill() and read by update/camTarget.
+let lastBlow = null, blowT = 0;
 function update(rdt) {
   let dt = rdt;
   if (!SIM) {
     realTime += rdt; sfxBudget = 7;
     let ts = phase === 'battle' ? (paused ? 0 : speed) : 1;
-    if (slowmo > 0) { slowmo -= rdt; ts *= 0.3; }
+    if (blowT > 0) { blowT -= rdt; ts = 0.12 + 0.18 * Math.max(0, 1 - blowT / 1.6); if (slowmo > 0) slowmo -= rdt; }
+    else if (slowmo > 0) { slowmo -= rdt; ts *= 0.3; }
     if (hitstop > 0) { hitstop -= rdt; ts *= 0.04; }
     dt = rdt * ts;
     trauma = Math.max(0, trauma - rdt * 2.2);
@@ -2121,7 +2153,7 @@ function update(rdt) {
     const a0 = alive(TEAMS[0]).length, a1 = alive(TEAMS[1]).length;
     // "outnumbered" for the COMEBACK prop: behind in living units after losing at least one of your own
     if (battleLog && !battleLog.outnumbered && a0 < a1 && battleLog.deaths.some(d => d.team === 0 && !d.temp)) battleLog.outnumbered = true;
-    if (a0 === 0 || a1 === 0) { winner = a0 === 0 ? TEAMS[1] : TEAMS[0]; if (a0 === 0 && a1 === 0) winner = TEAMS[1]; phase = 'ending'; endTimer = 1.6; slowmo = Math.max(slowmo, 0.8); finalizeLog(); }
+    if (a0 === 0 || a1 === 0) { winner = a0 === 0 ? TEAMS[1] : TEAMS[0]; if (a0 === 0 && a1 === 0) winner = TEAMS[1]; phase = 'ending'; endTimer = lastBlow ? 3.4 : 1.6; slowmo = Math.max(slowmo, lastBlow ? 1.9 : 0.8); finalizeLog(); }
     if (!SIM) { settleLive(false); slipTick -= rdt; if (slipTick <= 0) { slipTick = 0.3; renderSlipBox(); } }
     statsTick -= rdt; if (!SIM && statsOpen && statsTick <= 0) { statsTick = 0.25; renderStats(); }
   } else if (phase === 'ending') { battleTime += dt; updateChests(dt); endTimer -= rdt; if (endTimer <= 0) endBattle(); }
@@ -2397,6 +2429,15 @@ const UI = { debug: $('debug'), merchant: $('merchant'), left: $('left'), right:
 let toastT = null;
 function toast(msg) { UI.toast.textContent = msg; UI.toast.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => UI.toast.hidden = true, 1600); }
 function unitTags(u) { return u.upgrades.map(x => `<span class="tag" style="background:${x.color}" data-tip="<b>${x.icon || ''} ${esc(x.name)}</b> · ${esc(RARITY[x.r].name)}<br>${esc(x.desc)}">${x.icon || ''} ${esc(x.name)}</span>`).join(''); }
+// Repeat purchases get steep: a skill you already own on n units costs SKILL_REPEAT[n] times the card price,
+// and the n-th evolution of the run costs EVO_REPEAT[n] times the base. Owning is what counts, not buying,
+// so the price is read off the roster and the card always shows the real number.
+const SKILL_REPEAT = [1, 2.5, 5, 9, 15, 24];
+const EVO_REPEAT = [1, 3, 6, 10, 15, 21];
+const repeatMult = (tbl, n) => n < tbl.length ? tbl[n] : tbl[tbl.length - 1] + (n - tbl.length + 1) * 10;
+function skillCopies(up) { return roster.filter(u => u.upgrades.some(x => x.id === up.id)).length; }
+function cardPrice(c) { return c.kind === 'up' ? Math.round(c.price * repeatMult(SKILL_REPEAT, skillCopies(c.up))) : c.price; }
+function evolveCost() { return Math.round((60 + round * 5) * repeatMult(EVO_REPEAT, roster.filter(u => u.def.evolved).length)); }
 function rollShop() {
   shopCards = [];
   for (let i = 0; i < L().cards; i++) { const r = rollRarity(); const pool = UPGRADES.filter(x => x.r === r); shopCards.push({ kind: 'up', up: pick(pool), rar: RARITY[r], price: RARITY[r].price }); }
@@ -2407,7 +2448,7 @@ function rollShop() {
 function renderShop() {
   const rerollCost = 10;
   UI.shop.innerHTML = shopCards.map((c, i) => {
-    if (c.kind === 'up') { const picked = targeting && targeting.index === i; return `<div class="card ${picked ? 'picked' : gold - c.price < MIN_BET ? 'disabled' : ''}" data-i="${i}"><div class="cat skill">${picked ? '▶ APPLYING · PICK A UNIT' : '✦ SKILL'}</div><div class="big">${c.up.icon || '✦'}</div><div class="rar" style="color:${c.rar.color}">${c.rar.name}</div><div class="nm" style="color:${c.up.color}">${esc(c.up.name)}</div><div class="ds">${esc(c.up.desc)}${c.up.only ? '<br><i>' + c.up.only.join('/') + ' only</i>' : ''}</div><div class="pr">${picked ? '<span style="color:#ff9a8e;font-size:10px">tap to cancel</span> ' : ''}$${c.price}</div></div>`; }
+    if (c.kind === 'up') { const picked = targeting && targeting.index === i, price = cardPrice(c), copies = skillCopies(c.up); return `<div class="card ${picked ? 'picked' : gold - price < MIN_BET ? 'disabled' : ''}" data-i="${i}"><div class="cat skill">${picked ? '▶ APPLYING · PICK A UNIT' : '✦ SKILL'}</div><div class="big">${c.up.icon || '✦'}</div><div class="rar" style="color:${c.rar.color}">${c.rar.name}</div><div class="nm" style="color:${c.up.color}">${esc(c.up.name)}</div><div class="ds">${esc(c.up.desc)}${c.up.only ? '<br><i>' + c.up.only.join('/') + ' only</i>' : ''}${copies ? `<br><i style="color:#ff9f43">you own ${copies} · price x${repeatMult(SKILL_REPEAT, copies)}</i>` : ''}</div><div class="pr">${picked ? '<span style="color:#ff9a8e;font-size:10px">tap to cancel</span> ' : ''}$${price}</div></div>`; }
     if (c.kind === 'item') return `<div class="card ${gold - c.price < MIN_BET || inventory.length >= invMax() ? 'disabled' : ''}" data-i="${i}" style="background:#14202e"><div class="cat item">🧪 CONSUMABLE</div><div class="big">${c.item.icon}</div><div class="rar" style="color:${RARITY[c.item.r].color}">${RARITY[c.item.r].name}</div><div class="nm">${esc(c.item.name)}</div><div class="ds">${esc(c.item.desc)}</div><div class="pr">$${c.price}</div></div>`;
     const d = UNIT_TYPES[c.type];
     return `<div class="card unit ${gold - c.price < MIN_BET || roster.length >= rosterCap() ? 'disabled' : ''}" data-i="${i}"><div class="cat unit">⚔ RECRUIT</div><div class="big"><canvas class="ucv" data-type="${c.type}" width="13" height="15"></canvas></div><div class="rar" style="color:#8ec5ff">${d.kind.toUpperCase()}</div><div class="nm">${esc(d.name)}</div><div class="ds">${esc(d.desc)}<br><span class="muted">HP ${d.hp} · ATK ${d.atk}</span></div><div class="pr">$${c.price}</div></div>`;
@@ -2421,8 +2462,9 @@ function renderShop() {
 function nextUnlockText() { const nxt = BASE_TYPES.filter(t => UNIT_TYPES[t].unlock > league + 1).sort((a, b) => UNIT_TYPES[a].unlock - UNIT_TYPES[b].unlock)[0]; return nxt ? UNIT_TYPES[nxt].name + ' (' + LEAGUES[UNIT_TYPES[nxt].unlock - 1].name + ')' : 'all unlocked'; }
 function buyCard(i) {
   const c = shopCards[i]; if (!c) return;
-  if (gold < c.price) { toast('NOT ENOUGH GOLD'); SFX.deny(); return; }
-  if (gold - c.price < MIN_BET) { toast('KEEP AT LEAST $' + MIN_BET + ' FOR YOUR BET'); SFX.deny(); return; }
+  const price = cardPrice(c);
+  if (gold < price) { toast('NOT ENOUGH GOLD'); SFX.deny(); return; }
+  if (gold - price < MIN_BET) { toast('KEEP AT LEAST $' + MIN_BET + ' FOR YOUR BET'); SFX.deny(); return; }
   if (oddsLocked && !BOOKIE.reacted) { BOOKIE.reacted = true; setTimeout(() => bookieSay("Buying more? Too late. I've written it down.", 'talk'), 400); }
   if (c.kind === 'item') {
     if (inventory.length >= invMax()) { toast('BAG FULL'); SFX.deny(); return; }
@@ -2435,9 +2477,11 @@ function buyCard(i) {
   } else { targeting = { card: c, up: c.up, index: i }; selected = null; toast(MOBILE ? 'TAP ONE OF YOUR UNITS ON THE FIELD' : 'CLICK ONE OF YOUR UNITS'); if (MOBILE) tab = 'army'; renderUI(); }
 }
 function applyCardTo(u) {
-  const c = targeting.card; if (!c) return;
+  const c = targeting && targeting.card; if (!c) return;
   if (!upgradeAllowed(u, c.up)) { toast(c.up.only ? 'ONLY FOR ' + c.up.only.join('/').toUpperCase() + ' UNITS' : 'ALREADY HAS THIS'); SFX.deny(); return; }
-  gold -= c.price; shopCards.splice(targeting.index, 1); targeting = null;
+  const price = cardPrice(c);
+  if (gold < price || gold - price < MIN_BET) { toast(gold < price ? 'NOT ENOUGH GOLD' : 'KEEP AT LEAST $' + MIN_BET + ' FOR YOUR BET'); SFX.deny(); return; }
+  gold -= price; shopCards.splice(targeting.index, 1); targeting = null;
   applyUpgrade(u, c.up); u.hp = u.maxHp; selected = null; focusHoldUntil = realTime + 1.8; scheduleOdds(); renderUI(); SFX.buy();
 }
 function threatTags(list) {
@@ -2540,7 +2584,7 @@ function renderResult() {
   const r = lastResult; if (!r) return;
   const all = roster.concat(enemyUnits); const mvp = all.slice().sort((a, b) => (b.stats.dmg + b.stats.healed * 0.8) - (a.stats.dmg + a.stats.healed * 0.8))[0];
   const staked = r.tickets.reduce((a, t) => a + t.stake, 0), hits = r.tickets.filter(t => t.status === 'hit').length;
-  const rows = r.tickets.map(t => `<tr class="${t.status}"><td>${t.status === 'hit' ? '■' : '✕'} ${esc(t.legs.map(l => l.title).join(' + '))}${t.legs.length > 1 ? ' <span class="muted">parlay</span>' : ''}</td><td class="n">x${ticketOdds(t).toFixed(2)}</td><td class="n">$${t.stake}</td><td class="n" style="color:${t.paid >= 0 ? '#7dff8a' : '#ff8a7e'}">${t.paid >= 0 ? '+' : '-'}$${Math.abs(t.paid)}</td></tr>`).join('');
+  const rows = r.tickets.map(t => `<tr class="${t.status}"><td>${t.status === 'hit' ? '■' : '✕'} ${esc(t.legs.map(l => l.title).join(' + '))}${t.legs.length > 1 ? ' <span class="muted">parlay</span>' : ''}<small class="legs">${t.legs.map(l => esc(l.desc) + (t.legs.length > 1 ? ' (x' + l.odds.toFixed(2) + (l.status === 'hit' ? ' ■' : l.status === 'bust' ? ' ✕' : '') + ')' : '')).join(' + ')}</small></td><td class="n">x${ticketOdds(t).toFixed(2)}</td><td class="n">$${t.stake}</td><td class="n" style="color:${t.paid >= 0 ? '#7dff8a' : '#ff8a7e'}">${t.paid >= 0 ? '+' : '-'}$${Math.abs(t.paid)}</td></tr>`).join('');
   UI.result.innerHTML = `<h1 style="color:#ffd93b">VICTORY</h1>
     <div class="muted">won in ${(r.time || 0).toFixed(1)}s · ${r.lost || 0} of yours lost · ${hits}/${r.tickets.length} tickets hit</div>
     <table class="settle">${rows}
@@ -2560,7 +2604,7 @@ function renderGameOver() {
   const co = lastResult && lastResult.cashout, tk = (lastResult && lastResult.tickets) || [];
   UI.gameover.innerHTML = `<h1 style="${co ? 'color:#ffd93b' : ''}">${co ? 'CASHED OUT' : 'DEFEAT'}</h1>
     <div class="muted">${co ? 'you walked away with $' + gold + '. run recorded.' : 'your army fell. the run is over and the house keeps the slip.'}</div>
-    ${!co && tk.length ? `<table class="settle" style="max-width:420px;margin:8px auto">${tk.map(t => `<tr class="${t.status}"><td>${t.status === 'hit' ? '■ cashed early' : '✕ void'}</td><td>${esc(t.legs.map(l => l.title).join(' + '))}</td><td class="n" style="color:${t.paid >= 0 ? '#7dff8a' : '#ff8a7e'}">${t.paid >= 0 ? '+' : '-'}$${Math.abs(t.paid)}</td></tr>`).join('')}</table>` : ''}
+    ${!co && tk.length ? `<table class="settle" style="max-width:420px;margin:8px auto">${tk.map(t => `<tr class="${t.status}"><td>${t.status === 'hit' ? '■ cashed early' : '✕ void'}</td><td>${esc(t.legs.map(l => l.title).join(' + '))}<small class="legs">${t.legs.map(l => esc(l.desc)).join(' + ')}</small></td><td class="n" style="color:${t.paid >= 0 ? '#7dff8a' : '#ff8a7e'}">${t.paid >= 0 ? '+' : '-'}$${Math.abs(t.paid)}</td></tr>`).join('')}</table>` : ''}
     <div class="row" style="justify-content:center;gap:18px;margin:14px 0;flex-wrap:wrap"><span class="muted">reached <b style="color:${L().color}">${esc(L().name)}</b></span><span class="muted">rounds survived <b style="color:#fff">${round}</b></span><span class="muted">tickets <b style="color:#fff">${ticketsWon}-${ticketsLost}</b></span><span class="muted">peak gold <b style="color:#ffd93b">$${peakGold}</b></span><span class="muted">total winnings <b style="color:#6aff7a">$${totalWon}</b></span></div>
     <div style="margin:6px 0 12px" class="muted">your army: ${roster.map(u => `<b style="color:${u.def.evolved ? '#ffd700' : '#fff'}">${esc(u.def.name)}</b> LV${u.level}`).join(', ')}</div>
     <div class="row" style="justify-content:center;gap:10px;flex-wrap:wrap"><span class="muted">name</span><input class="nm" id="goname" maxlength="10" value="${esc(playerName())}"><button id="gosave" style="padding:6px 10px">SAVE NAME</button></div>
@@ -2601,7 +2645,7 @@ function renderCodex() {
       <div class="evo"><span class="muted">EVOLVES INTO</span> <b style="color:#ffd700">${esc(e.name)}</b> <span class="muted">(${evoStats(e)})</span><canvas class="cx-prev" data-type="${d.evo}" width="${240 * DPR}" height="${120 * DPR}"></canvas><span class="muted">passive:</span> ${esc(e.passive)}<br><span class="muted">ULT</span> <b style="color:#c85cff">${esc(e.ultName)}</b> ${esc(e.ultDesc)}</div></div>`; }).join('')}</div>
     <h4>SKILL CARDS (UPGRADES)</h4>
     ${RARITY.map((r, ri) => `<div style="margin:6px 0 2px;color:${r.color};font-weight:900;letter-spacing:2px;font-size:11px">${r.name} · $${r.price} · ${Math.round(rarityWeights()[ri] / rarityWeights().reduce((a, x) => a + x, 0) * 100)}% of shop rolls in this league</div><div class="cx">${UPGRADES.filter(u => u.r === ri).map(u => `<div class="cxu" style="border-color:${r.color}55"><span style="font-size:16px">${u.icon || ''}</span> <b style="color:${u.color}">${esc(u.name)}</b> ${u.only ? `<span class="muted">(${u.only.join('/')} only)</span>` : ''}<br>${esc(u.desc)}</div>`).join('')}</div>`).join('')}
-    <h4>EVOLUTION</h4><div style="font-size:11px">Any unit with 2 upgrades (LV3) can evolve for $${60 + round * 5} this round (price rises with rounds). Evolution keeps all upgrades, multiplies stats, changes the look, adds a passive and replaces the ultimate.</div>`;
+    <h4>EVOLUTION</h4><div style="font-size:11px">Any unit with 2 upgrades (LV3) can evolve for $${evolveCost()} this round (price rises with rounds, and each further evolution in a run costs x3, x6, x10...). A skill you already own on one unit costs x2.5 for a second copy, x5 for a third. Evolution keeps all upgrades, multiplies stats, changes the look, adds a passive and replaces the ultimate.</div>`;
   $('closecodex').onclick = () => { codexOpen = false; if (tab === 'codex') tab = 'bet'; renderUI(); };
   const ri2 = $('replayintro'); if (ri2) ri2.onclick = () => { codexOpen = false; renderUI(); if (!document.getElementById('intro')) runIntro(() => renderUI()); };
   initPreviews();
@@ -2689,7 +2733,7 @@ function renderHeroCard() {
   const u = selected, el = $('hcard');
   if (!u || phase !== 'prep' || u.dead) { el.hidden = true; return; }
   const d = u.def, mine = u.team.id === 0;
-  const canEvo = mine && !d.evolved && u.level >= 3, evoCost = 60 + round * 5, evo = d.evolved ? null : UNIT_TYPES[d.evo];
+  const canEvo = mine && !d.evolved && u.level >= 3, evoCost = evolveCost(), evolvedN = roster.filter(r => r.def.evolved).length, evo = d.evolved ? null : UNIT_TYPES[d.evo];
   el.innerHTML = `<div class="hcbody"><div class="row" style="align-items:flex-start">
       <div class="nm" style="color:${mine ? '#8ec5ff' : '#ff9a8e'}">${esc(unitTag(u))} <span class="muted" style="font-size:10px;font-weight:normal">LV${u.level} · ${d.kind.toUpperCase()}${mine ? '' : ' · ENEMY'}${mine && u.benched ? ' · BENCHED' : ''}</span></div>
       <button id="hcclose" style="padding:2px 7px;font-size:11px;flex:none;margin-left:6px">✕</button></div>
@@ -2699,7 +2743,7 @@ function renderHeroCard() {
     <div style="margin-top:4px">${unitTags(u) || '<span class="muted">no upgrades</span>'}</div>
     ${mine ? `<button id="hcbench" class="${u.benched ? 'red' : 'blue'}" style="width:100%;margin-top:6px;padding:5px;font-size:10px">${u.benched ? 'BENCHED · TAP TO FIELD' : 'FIGHTING · TAP TO BENCH'}</button>` : ''}
     ${evo ? `<div class="cxu" style="margin-top:6px"><span class="muted">EVOLUTION PATH →</span> <b style="color:#ffd700">${esc(evo.name)}</b><br><span class="muted">passive:</span> ${esc(evo.passive)}<br><span class="muted">ult:</span> <b style="color:#c85cff">${esc(evo.ultName)}</b> ${esc(evo.ultDesc)}<br><span class="muted">stats:</span> ${['hpMul', 'atkMul', 'rangeMul'].filter(k => evo[k]).map(k => k.replace('Mul', '').toUpperCase() + ' x' + evo[k]).join(', ')}${evo.critAdd ? ', CRIT +' + Math.round(evo.critAdd * 100) + '%' : ''}${evo.multishotAdd ? ', +1 projectile' : ''}${evo.sizeMul ? ', bigger' : ''}
-      ${mine ? `<button id="hcevolve" class="${canEvo ? 'gold' : ''}" style="width:100%;margin-top:6px;padding:5px;font-size:10px" ${canEvo && gold >= evoCost ? '' : 'disabled'}>EVOLVE · $${evoCost}</button><div class="muted" style="font-size:10px;margin-top:4px">${canEvo ? (gold >= evoCost ? 'ready to evolve!' : 'not enough gold') : 'needs 2 upgrades (LV3) · currently LV' + u.level}</div>` : ''}</div>` : ''}</div>`;
+      ${mine ? `<button id="hcevolve" class="${canEvo ? 'gold' : ''}" style="width:100%;margin-top:6px;padding:5px;font-size:10px" ${canEvo && gold >= evoCost ? '' : 'disabled'}>EVOLVE · $${evoCost}</button><div class="muted" style="font-size:10px;margin-top:4px">${canEvo ? (gold >= evoCost ? 'ready to evolve!' : 'not enough gold') : 'needs 2 upgrades (LV3) · currently LV' + u.level}${evolvedN ? ` · evolution #${evolvedN + 1} of the run costs x${repeatMult(EVO_REPEAT, evolvedN)}` : ''}</div>` : ''}</div>` : ''}</div>`;
   el.hidden = false; el.style.pointerEvents = 'auto';
   $('hcclose').onclick = () => { selected = null; renderUI(); };
   const bb = $('hcbench'); if (bb) bb.onclick = () => toggleBench(u);
